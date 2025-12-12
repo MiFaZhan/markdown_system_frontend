@@ -35,7 +35,7 @@ onMounted(() => {
   vditorInstance.value = new Vditor('vditor', {
     height: '100%',
     width: '100%',
-    mode: 'sv', // 模式: sv(分屏), ir(即时渲染), wysiwyg(所见即所得)
+    mode: 'wysiwyg', // 模式: sv(分屏), ir(即时渲染), wysiwyg(所见即所得)
     placeholder: '开始您的创作...',
     cache: {
       enable: false, // 禁用本地缓存，防止干扰模拟数据
