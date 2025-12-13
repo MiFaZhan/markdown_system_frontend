@@ -43,6 +43,15 @@ onMounted(() => {
     toolbarConfig: {
       pin: true,
     },
+    toolbar: [
+      'headings', 'bold', 'italic', 'strike', 'link', '|',
+      'list', 'ordered-list', 'check', 'outdent', 'indent', '|',
+      'quote', 'line', 'code', 'inline-code', '|',
+      'upload', 'table', '|',
+      'undo', 'redo', '|',
+      'edit-mode', 'both', 'preview', 'outline', 'fullscreen', '|',
+      'export', 'help'
+    ],
     // Vditor 加载完成后的回调
     after: () => {
       loadContent()
