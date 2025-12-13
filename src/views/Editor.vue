@@ -23,9 +23,11 @@ import Vditor from 'vditor'
 import 'vditor/dist/index.css' // 引入样式
 import { Back } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import { useFilesStore } from '../stores/files'
 
 const route = useRoute()
 const router = useRouter()
+const filesStore = useFilesStore()
 
 const title = ref('')
 const vditorInstance = ref(null) // 保存 Vditor 实例
@@ -51,7 +53,7 @@ onMounted(() => {
   vditorInstance.value = new Vditor('vditor', {
     height: '100%',
     width: '100%',
-    mode: 'wysiwyg', // 模式: sv(分屏), ir(即时渲染), wysiwyg(所见即所得)
+    mode: 'ir', // 模式: sv(分屏), ir(即时渲染), wysiwyg(所见即所得)
     placeholder: '开始您的创作...',
     theme: dark ? 'dark' : 'classic',
     preview: {
@@ -98,27 +100,48 @@ onBeforeUnmount(() => {
   }
 })
 
-// 模拟加载数据
+// 加载数据
 const loadContent = () => {
   if (route.params.id && route.params.id !== 'new') {
-    title.value = 'Vue3 学习笔记.md'
-    // 使用 setValue 设置内容
-    vditorInstance.value.setValue('## 这是基于 Vditor 的内容\n\n- 功能强大\n- 支持所见即所得\n- 原生 JS 编写')
+    const file = filesStore.getFile(route.params.id)
+    if (file) {
+      title.value = file.name
+      vditorInstance.value.setValue(file.content || '')
+    } else {
+      ElMessage.error('文件不存在')
+      router.push('/')
+    }
   } else {
     // 新建时的默认内容
-    vditorInstance.value.setValue('# 新建文档\n开始写作...')
+    vditorInstance.value.setValue('# 新建\n开始写作...')
   }
 }
 
 const save = () => {
   if (!title.value) return ElMessage.warning('请输入标题')
   
-  // 使用 getValue 获取 Markdown 内容
   const content = vditorInstance.value.getValue()
+  const now = new Date().toLocaleString()
   
-  console.log('Save:', { title: title.value, content: content })
+  if (route.params.id && route.params.id !== 'new') {
+    // 更新现有文件
+    filesStore.updateFile(route.params.id, {
+      name: title.value,
+      content,
+      updateTime: now
+    })
+  } else {
+    // 新建文件
+    filesStore.addFile({
+      id: Date.now(),
+      name: title.value.endsWith('.md') ? title.value : `${title.value}.md`,
+      content,
+      updateTime: now,
+      author: 'Admin'
+    })
+  }
+  
   ElMessage.success('保存成功')
-  
   setTimeout(() => router.push('/'), 500)
 }
 </script>
@@ -173,5 +196,10 @@ const save = () => {
   flex-wrap: wrap !important;
   padding-left: 0 !important;
   padding-right: 0 !important;
+}
+
+/* 隐藏 edit-mode 下拉菜单中的"所见即所得"选项 */
+.vditor-toolbar .vditor-panel--arrow button[data-mode="wysiwyg"] {
+  display: none !important;
 }
 </style>
