@@ -73,11 +73,11 @@ const deleteFile = (id) => {
 <style scoped>
 .layout-container {
   height: 100vh;
-  background-color: #f5f7fa;
+  background-color: var(--color-background-mute);
 }
 .header {
-  background-color: #fff;
-  border-bottom: 1px solid #dcdfe6;
+  background-color: var(--color-background);
+  border-bottom: 1px solid var(--color-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -93,5 +93,6 @@ const deleteFile = (id) => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+  color: var(--color-text);
 }
 </style>

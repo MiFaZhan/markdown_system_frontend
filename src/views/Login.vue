@@ -64,18 +64,19 @@ const handleLogin = async () => {
 }
 .login-card {
   width: 400px;
+  background-color: var(--color-background);
 }
 .card-header {
   text-align: center;
+  color: var(--color-text);
 }
 .w-100 {
   width: 100%;
 }
 .tips {
   font-size: 12px;
-  color: #999;
+  color: var(--color-text-secondary);
   text-align: center;
   margin-top: 10px;
 }
-
 </style>

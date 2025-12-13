@@ -30,13 +30,39 @@ const router = useRouter()
 const title = ref('')
 const vditorInstance = ref(null) // 保存 Vditor 实例
 
+// 检测系统是否为深色模式
+const isDarkMode = () => window.matchMedia('(prefers-color-scheme: dark)').matches
+
+// 设置 Vditor 完整主题（工具栏、内容、代码块）
+const setVditorTheme = (dark) => {
+  if (vditorInstance.value) {
+    vditorInstance.value.setTheme(
+      dark ? 'dark' : 'classic',      // 工具栏主题
+      dark ? 'dark' : 'light',        // 内容主题
+      dark ? 'dracula' : 'github'     // 代码块主题
+    )
+  }
+}
+
 onMounted(() => {
+  const dark = isDarkMode()
+  
   // 1. 初始化 Vditor
   vditorInstance.value = new Vditor('vditor', {
     height: '100%',
     width: '100%',
     mode: 'wysiwyg', // 模式: sv(分屏), ir(即时渲染), wysiwyg(所见即所得)
     placeholder: '开始您的创作...',
+    theme: dark ? 'dark' : 'classic',
+    preview: {
+      theme: {
+        current: dark ? 'dark' : 'light',
+        path: 'https://unpkg.com/vditor/dist/css/content-theme'
+      },
+      hljs: {
+        style: dark ? 'dracula' : 'github'
+      }
+    },
     cache: {
       enable: false, // 禁用本地缓存，防止干扰模拟数据
     },
@@ -56,6 +82,11 @@ onMounted(() => {
     after: () => {
       loadContent()
     },
+  })
+
+  // 监听系统主题变化，动态切换 Vditor 主题
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+    setVditorTheme(e.matches)
   })
 })
 
@@ -101,8 +132,8 @@ const save = () => {
 
 .editor-header {
   height: 60px;
-  background: #fff;
-  border-bottom: 1px solid #ddd;
+  background: var(--color-background);
+  border-bottom: 1px solid var(--color-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -125,11 +156,22 @@ const save = () => {
   flex: 1;
   overflow: hidden; /* 必须设置，否则 Vditor 可能会撑开页面 */
   padding: 10px;    /* 可选：给编辑器留一点边距 */
-  background-color: #f5f7fa;
+  background-color: var(--color-background-mute);
 }
 
 /* 确保 Vditor 容器撑满父元素 */
 #vditor {
   height: 100%;
+}
+</style>
+
+<style>
+/* 工具栏始终居中 */
+.vditor-toolbar.vditor-toolbar--pin {
+  display: flex !important;
+  justify-content: center !important;
+  flex-wrap: wrap !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 </style>

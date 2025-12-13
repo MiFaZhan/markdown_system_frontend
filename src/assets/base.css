@@ -32,8 +32,19 @@
 
   --color-heading: var(--vt-c-text-light-1);
   --color-text: var(--vt-c-text-light-1);
+  --color-text-secondary: rgba(60, 60, 60, 0.66);
 
   --section-gap: 160px;
+  
+  /* Element Plus 主题适配 */
+  --el-bg-color: var(--vt-c-white);
+  --el-bg-color-overlay: var(--vt-c-white);
+  --el-text-color-primary: var(--vt-c-indigo);
+  --el-text-color-regular: var(--vt-c-text-light-1);
+  --el-border-color: var(--vt-c-divider-light-2);
+  --el-border-color-light: var(--vt-c-divider-light-1);
+  --el-fill-color-light: var(--vt-c-white-soft);
+  --el-fill-color-blank: var(--vt-c-white);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -47,6 +58,46 @@
 
     --color-heading: var(--vt-c-text-dark-1);
     --color-text: var(--vt-c-text-dark-2);
+    --color-text-secondary: rgba(235, 235, 235, 0.64);
+
+    /* Element Plus 深色主题适配 */
+    --el-bg-color: #1d1e1f;
+    --el-bg-color-page: var(--vt-c-black);
+    --el-bg-color-overlay: #1d1e1f;
+    --el-text-color-primary: #e5eaf3;
+    --el-text-color-regular: #cfd3dc;
+    --el-text-color-secondary: #a3a6ad;
+    --el-text-color-placeholder: #8d9095;
+    --el-border-color: #4c4d4f;
+    --el-border-color-light: #414243;
+    --el-border-color-lighter: #363637;
+    --el-border-color-extra-light: #2b2b2c;
+    --el-fill-color: #303030;
+    --el-fill-color-light: #262727;
+    --el-fill-color-lighter: #1d1d1d;
+    --el-fill-color-blank: #1d1e1f;
+    --el-color-white: #1d1e1f;
+    --el-mask-color: rgba(0, 0, 0, 0.8);
+
+    /* 表格深色适配 */
+    --el-table-bg-color: #1d1e1f;
+    --el-table-tr-bg-color: #1d1e1f;
+    --el-table-header-bg-color: #262727;
+    --el-table-row-hover-bg-color: #262727;
+    --el-table-border-color: #363637;
+    --el-table-text-color: #cfd3dc;
+
+    /* 卡片深色适配 */
+    --el-card-bg-color: #1d1e1f;
+
+    /* 输入框深色适配 */
+    --el-input-bg-color: #1d1e1f;
+    --el-input-text-color: #cfd3dc;
+
+    /* 按钮深色适配 */
+    --el-button-bg-color: #1d1e1f;
+    --el-button-text-color: #cfd3dc;
+    --el-button-hover-bg-color: #262727;
   }
 }
 
