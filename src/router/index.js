@@ -11,14 +11,14 @@ const router = createRouter({
     },
     {
       path: '/',
-      name: 'FileList',
-      component: () => import('../views/FileList.vue'),
+      name: 'Projects',
+      component: () => import('../views/Projects.vue'),
       meta: { requiresAuth: true }
     },
     {
-      path: '/editor/:id?', // id是可选的，新建或编辑
-      name: 'Editor',
-      component: () => import('../views/Editor.vue'),
+      path: '/project/:projectId',
+      name: 'Workspace',
+      component: () => import('../views/Workspace.vue'),
       meta: { requiresAuth: true }
     }
   ]

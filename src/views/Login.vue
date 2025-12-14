@@ -79,4 +79,15 @@ const handleLogin = async () => {
   text-align: center;
   margin-top: 10px;
 }
+
+/* Dark Reader 风格深色模式 */
+@media (prefers-color-scheme: dark) {
+  .login-wrapper {
+    background: linear-gradient(135deg, #3d1a6d 0%, #1a4a7a 100%);
+  }
+
+  .login-card {
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+  }
+}
 </style>

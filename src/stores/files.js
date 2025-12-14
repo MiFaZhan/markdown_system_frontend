@@ -1,21 +1,15 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
+import { useProjectsStore } from './projects'
 
 export const useFilesStore = defineStore('files', () => {
-  const fileList = ref([
-    {
-      id: 1,
-      name: '学习笔记',
-      type: 'folder',
-      updateTime: '2023-10-24 10:00',
-      children: [
-        { id: 11, name: 'Vue3 学习笔记.md', type: 'file', updateTime: '2023-10-24 10:00', content: '## Vue3 学习笔记\n\n- 组合式API\n- 响应式系统' },
-        { id: 12, name: 'React 入门.md', type: 'file', updateTime: '2023-10-23 15:30', content: '# React 入门\n\n学习React...' }
-      ]
-    },
-    { id: 2, name: '项目需求文档.md', type: 'file', updateTime: '2023-10-23 15:30', content: '# 项目需求文档\n\n这是项目需求...' },
-    { id: 3, name: '会议记录_2023.md', type: 'file', updateTime: '2023-10-22 09:20', content: '# 会议记录\n\n会议内容...' },
-  ])
+  const projectsStore = useProjectsStore()
+
+  // 从当前项目获取文件列表
+  const fileList = computed(() => {
+    const project = projectsStore.currentProject()
+    return project ? project.files : []
+  })
 
   // 递归查找文件
   function findFile(list, id) {
@@ -31,7 +25,7 @@ export const useFilesStore = defineStore('files', () => {
 
   // 递归删除文件
   function removeFile(list, id) {
-    const index = list.findIndex(f => f.id === Number(id))
+    const index = list.findIndex((f) => f.id === Number(id))
     if (index !== -1) {
       list.splice(index, 1)
       return true
@@ -43,30 +37,37 @@ export const useFilesStore = defineStore('files', () => {
   }
 
   function addFile(file, parentId = null) {
+    const project = projectsStore.currentProject()
+    if (!project) return
+
     if (parentId) {
-      const parent = findFile(fileList.value, parentId)
+      const parent = findFile(project.files, parentId)
       if (parent && parent.type === 'folder') {
         parent.children = parent.children || []
         parent.children.unshift(file)
         return
       }
     }
-    fileList.value.unshift(file)
+    project.files.unshift(file)
   }
 
   function getFile(id) {
-    return findFile(fileList.value, id)
+    const project = projectsStore.currentProject()
+    if (!project) return null
+    return findFile(project.files, id)
   }
 
   function updateFile(id, data) {
-    const file = findFile(fileList.value, id)
+    const file = getFile(id)
     if (file) {
       Object.assign(file, data)
     }
   }
 
   function deleteFile(id) {
-    removeFile(fileList.value, id)
+    const project = projectsStore.currentProject()
+    if (!project) return
+    removeFile(project.files, id)
   }
 
   return { fileList, addFile, getFile, updateFile, deleteFile }

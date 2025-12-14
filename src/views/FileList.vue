@@ -284,4 +284,15 @@ const handleFileSelect = (event) => {
   text-decoration: none;
   cursor: default;
 }
+
+/* Dark Reader 风格深色模式 */
+@media (prefers-color-scheme: dark) {
+  .file-name {
+    color: var(--dr-accent, #5c9aff);
+  }
+
+  .file-name.is-folder {
+    color: var(--dr-warning, #d9a34a);
+  }
+}
 </style>
