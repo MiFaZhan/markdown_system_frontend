@@ -6,14 +6,5 @@
 </template>
 
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-body {
-  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
-  background-color: var(--color-background);
-}
+/* 全局样式已在 base.css 中定义 */
 </style>
