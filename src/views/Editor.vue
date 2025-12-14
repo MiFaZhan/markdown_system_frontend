@@ -80,6 +80,7 @@ onMounted(() => {
       'edit-mode', 'both', 'preview', 'outline', 'fullscreen', '|',
       'export', 'help'
     ],
+
     // Vditor 加载完成后的回调
     after: () => {
       loadContent()
@@ -202,4 +203,6 @@ const save = () => {
 .vditor-toolbar .vditor-panel--arrow button[data-mode="wysiwyg"] {
   display: none !important;
 }
+
+
 </style>
