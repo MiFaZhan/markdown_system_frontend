@@ -10,11 +10,16 @@
         :show-after="80"
         :hide-after="120"
       >
-        <el-button 
-          :icon="showSidebar ? Fold : Expand" 
-          link 
-          @click="() => { sidebarTipVisible = false; $emit('toggle-sidebar') }"
+        <el-button
+          :icon="showSidebar ? Fold : Expand"
+          link
           class="header-icon-btn"
+          @click="
+            () => {
+              sidebarTipVisible = false
+              $emit('toggle-sidebar')
+            }
+          "
         />
       </el-tooltip>
 
@@ -28,18 +33,23 @@
           :show-after="80"
           :hide-after="120"
         >
-          <el-button 
-            :icon="List" 
-            link 
-            @click="() => { outlineTipVisible = false; $emit('toggle-outline') }"
+          <el-button
+            :icon="List"
+            link
             class="header-icon-btn"
             :type="showOutline ? 'primary' : ''"
+            @click="
+              () => {
+                outlineTipVisible = false
+                $emit('toggle-outline')
+              }
+            "
           />
         </el-tooltip>
       </template>
     </header>
-    
-    <div class="editor-body" ref="editorBodyRef">
+
+    <div ref="editorBodyRef" class="editor-body">
       <div v-if="file" id="vditor"></div>
       <div v-else class="empty-state">
         <el-icon :size="64" color="#ddd"><Document /></el-icon>
@@ -54,7 +64,6 @@ import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import Vditor from 'vditor'
 import 'vditor/dist/index.css'
 import { Fold, Expand, List, Document } from '@element-plus/icons-vue'
-import { useFilesStore } from '../stores/files'
 
 const props = defineProps({
   file: {
@@ -74,7 +83,6 @@ const props = defineProps({
 
 const emit = defineEmits(['update-outline', 'toggle-outline', 'toggle-sidebar'])
 
-const filesStore = useFilesStore()
 const vditorInstance = ref(null)
 const editorBodyRef = ref(null)
 let resizeObserver = null
@@ -108,9 +116,9 @@ const initEditor = () => {
   }
 
   if (!props.file) return
-  
+
   const dark = isDarkMode()
-  
+
   vditorInstance.value = new Vditor('vditor', {
     height: '100%',
     width: '100%',
@@ -127,26 +135,45 @@ const initEditor = () => {
       }
     },
     cache: {
-      enable: false,
+      enable: false
     },
     typewriterMode: false,
     toolbarConfig: {
-      pin: true,
+      pin: true
     },
     toolbar: [
-      'headings', 'bold', 'italic', 'strike', 'link', '|',
-      'list', 'ordered-list', 'check', 'outdent', 'indent', '|',
-      'quote', 'line', 'code', 'inline-code', '|',
-      'upload', 'table', '|',
-      'undo', 'redo', '|',
-      'preview', 'fullscreen'
+      'headings',
+      'bold',
+      'italic',
+      'strike',
+      'link',
+      '|',
+      'list',
+      'ordered-list',
+      'check',
+      'outdent',
+      'indent',
+      '|',
+      'quote',
+      'line',
+      'code',
+      'inline-code',
+      '|',
+      'upload',
+      'table',
+      '|',
+      'undo',
+      'redo',
+      '|',
+      'preview',
+      'fullscreen'
     ],
     input: (value) => {
       parseOutline(value)
     },
     after: () => {
       loadContent()
-    },
+    }
   })
 }
 
@@ -159,37 +186,41 @@ const loadContent = () => {
 }
 
 // 监听文件变化
-watch(() => props.file?.id, (newId, oldId) => {
-  if (newId !== oldId) {
-    if (newId) {
-      nextTick(() => {
-        // 如果之前没有文件，现在有了，可能需要初始化编辑器
-        if (!vditorInstance.value) {
-          initEditor()
-        } else {
-          loadContent()
+watch(
+  () => props.file?.id,
+  (newId, oldId) => {
+    if (newId !== oldId) {
+      if (newId) {
+        nextTick(() => {
+          // 如果之前没有文件，现在有了，可能需要初始化编辑器
+          if (!vditorInstance.value) {
+            initEditor()
+          } else {
+            loadContent()
+          }
+        })
+      } else {
+        // 如果变成了没有文件，销毁编辑器
+        if (vditorInstance.value) {
+          vditorInstance.value.destroy()
+          vditorInstance.value = null
         }
-      })
-    } else {
-      // 如果变成了没有文件，销毁编辑器
-      if (vditorInstance.value) {
-        vditorInstance.value.destroy()
-        vditorInstance.value = null
       }
     }
-  }
-}, { immediate: false })
+  },
+  { immediate: false }
+)
 
 // 高亮标题元素
 const highlightHeading = (el) => {
   // 移除之前的高亮
-  document.querySelectorAll('.heading-highlight').forEach(e => {
+  document.querySelectorAll('.heading-highlight').forEach((e) => {
     e.classList.remove('heading-highlight')
   })
-  
+
   // 添加高亮
   el.classList.add('heading-highlight')
-  
+
   // 2秒后移除高亮
   setTimeout(() => {
     el.classList.remove('heading-highlight')
@@ -200,15 +231,15 @@ const highlightHeading = (el) => {
 const handleScrollToHeading = (e) => {
   const heading = e.detail
   if (!heading) return
-  
+
   // 在 IR 模式下查找标题元素
   const vditorElement = document.getElementById('vditor')
   if (!vditorElement) return
-  
+
   // 查找所有标题元素
   const headingTag = `h${heading.level}`
   const headings = vditorElement.querySelectorAll(`.vditor-ir .vditor-reset ${headingTag}`)
-  
+
   // 找到匹配的标题
   for (const el of headings) {
     // 获取标题文本（去除 marker 等额外元素）
@@ -220,9 +251,11 @@ const handleScrollToHeading = (e) => {
       return
     }
   }
-  
+
   // 备用方案：通过内容查找
-  const allHeadings = vditorElement.querySelectorAll('.vditor-ir .vditor-reset h1, .vditor-ir .vditor-reset h2, .vditor-ir .vditor-reset h3, .vditor-ir .vditor-reset h4, .vditor-ir .vditor-reset h5, .vditor-ir .vditor-reset h6')
+  const allHeadings = vditorElement.querySelectorAll(
+    '.vditor-ir .vditor-reset h1, .vditor-ir .vditor-reset h2, .vditor-ir .vditor-reset h3, .vditor-ir .vditor-reset h4, .vditor-ir .vditor-reset h5, .vditor-ir .vditor-reset h6'
+  )
   for (const el of allHeadings) {
     const textContent = el.textContent.replace(/^#+\s*/, '').trim()
     if (textContent === heading.text) {
@@ -236,7 +269,7 @@ const handleScrollToHeading = (e) => {
 onMounted(() => {
   initEditor()
   window.addEventListener('scroll-to-heading', handleScrollToHeading)
-  
+
   // 监听系统主题变化
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
     if (vditorInstance.value) {
@@ -255,7 +288,7 @@ onMounted(() => {
       window.dispatchEvent(new Event('resize'))
     })
   })
-  
+
   if (editorBodyRef.value) {
     resizeObserver.observe(editorBodyRef.value)
   }
@@ -274,8 +307,18 @@ onBeforeUnmount(() => {
 })
 
 // 任何外部导致显示状态变化时，强制关闭提示
-watch(() => props.showSidebar, () => { sidebarTipVisible.value = false })
-watch(() => props.showOutline, () => { outlineTipVisible.value = false })
+watch(
+  () => props.showSidebar,
+  () => {
+    sidebarTipVisible.value = false
+  }
+)
+watch(
+  () => props.showOutline,
+  () => {
+    outlineTipVisible.value = false
+  }
+)
 </script>
 
 <style scoped>

@@ -1,23 +1,23 @@
 <template>
   <div class="workspace-layout" :class="{ 'is-mobile': isMobile }">
     <!-- 移动端遮罩层 -->
-    <div 
-      class="mobile-overlay" 
+    <div
       v-if="isMobile && (showSidebar || showOutline)"
+      class="mobile-overlay"
       @click="closeMobilePanels"
     ></div>
 
     <!-- 左侧文件列表 -->
-    <aside 
-      class="sidebar" 
+    <aside
+      v-if="showSidebar"
+      class="sidebar"
       :class="{ 'mobile-sidebar': isMobile }"
-      v-if="showSidebar" 
       :style="{ width: sidebarWidth + 'px' }"
     >
       <div class="sidebar-header">
         <el-button :icon="Back" link @click="goBack">返回</el-button>
         <span class="project-name">{{ currentProject?.name }}</span>
-        <el-dropdown @command="handleCreate" trigger="click">
+        <el-dropdown trigger="click" @command="handleCreate">
           <el-button :icon="Plus" circle size="small" />
           <template #dropdown>
             <el-dropdown-menu>
@@ -27,11 +27,16 @@
           </template>
         </el-dropdown>
       </div>
-      
+
       <div class="sidebar-search">
-        <el-input v-model="searchKeyword" placeholder="搜索..." :prefix-icon="Search" size="small" />
+        <el-input
+          v-model="searchKeyword"
+          placeholder="搜索..."
+          :prefix-icon="Search"
+          size="small"
+        />
       </div>
-      
+
       <div class="file-tree">
         <el-tree
           :data="fileTree"
@@ -47,8 +52,14 @@
                 <Folder v-if="data.type === 'folder'" />
                 <Document v-else />
               </el-icon>
-              <span class="node-label">{{ data.type === 'file' ? node.label.replace(/\.md$/, '') : node.label }}</span>
-              <el-dropdown trigger="click" @command="(cmd) => handleNodeCommand(cmd, data)" @click.stop>
+              <span class="node-label">{{
+                data.type === 'file' ? node.label.replace(/\.md$/, '') : node.label
+              }}</span>
+              <el-dropdown
+                trigger="click"
+                @command="(cmd) => handleNodeCommand(cmd, data)"
+                @click.stop
+              >
                 <el-icon class="node-more"><Setting /></el-icon>
                 <template #dropdown>
                   <el-dropdown-menu>
@@ -61,15 +72,18 @@
           </template>
         </el-tree>
       </div>
-      
+
       <!-- 拖拽条 -->
-      <div class="resize-handle resize-handle-right" @mousedown="startResize('sidebar', $event)"></div>
+      <div
+        class="resize-handle resize-handle-right"
+        @mousedown="startResize('sidebar', $event)"
+      ></div>
     </aside>
-    
+
     <!-- 中间编辑区 -->
     <main class="editor-area">
-      <EditorPanel 
-        :file="currentFile" 
+      <EditorPanel
+        :file="currentFile"
         :show-outline="showOutline"
         :show-sidebar="showSidebar"
         @update-outline="updateOutline"
@@ -77,16 +91,19 @@
         @toggle-sidebar="toggleSidebar"
       />
     </main>
-    
+
     <!-- 右侧大纲 -->
-    <aside 
-      class="outline-panel" 
+    <aside
+      v-if="currentFile && showOutline"
+      class="outline-panel"
       :class="{ 'mobile-outline': isMobile }"
-      v-if="currentFile && showOutline" 
       :style="{ width: outlineWidth + 'px' }"
     >
       <!-- 拖拽条 -->
-      <div class="resize-handle resize-handle-left" @mousedown="startResize('outline', $event)"></div>
+      <div
+        class="resize-handle resize-handle-left"
+        @mousedown="startResize('outline', $event)"
+      ></div>
       <div class="outline-header">大纲</div>
       <div class="outline-content">
         <OutlineTree :outline="outline" @click-heading="scrollToHeading" />
@@ -118,21 +135,21 @@ const isMobile = ref(false)
 const checkResponsive = (isInit = false) => {
   const width = window.innerWidth
   isMobile.value = width < 700
-  
+
   // 大纲自动隐藏阈值 (1000px)
   if (width < 1000) {
     if (isInit || (lastWidth >= 1000 && showOutline.value)) {
       showOutline.value = false
     }
   }
-  
+
   // 侧边栏自动隐藏阈值 (700px)
   if (width < 700) {
     if (isInit || (lastWidth >= 700 && showSidebar.value)) {
       showSidebar.value = false
     }
   }
-  
+
   lastWidth = width
 }
 
@@ -151,7 +168,7 @@ onMounted(() => {
   if (projectId) {
     projectsStore.setCurrentProject(projectId)
   }
-  
+
   checkResponsive(true)
   window.addEventListener('resize', handleResize)
 })
@@ -216,11 +233,9 @@ const startResize = (panel, e) => {
   e.preventDefault()
   const startX = e.clientX
   const startWidth = panel === 'sidebar' ? sidebarWidth.value : outlineWidth.value
-  
+
   const onMouseMove = (moveEvent) => {
-    const delta = panel === 'sidebar' 
-      ? moveEvent.clientX - startX 
-      : startX - moveEvent.clientX
+    const delta = panel === 'sidebar' ? moveEvent.clientX - startX : startX - moveEvent.clientX
     const newWidth = Math.max(150, Math.min(400, startWidth + delta))
     if (panel === 'sidebar') {
       sidebarWidth.value = newWidth
@@ -228,14 +243,14 @@ const startResize = (panel, e) => {
       outlineWidth.value = newWidth
     }
   }
-  
+
   const onMouseUp = () => {
     document.removeEventListener('mousemove', onMouseMove)
     document.removeEventListener('mouseup', onMouseUp)
     document.body.style.cursor = ''
     document.body.style.userSelect = ''
   }
-  
+
   document.body.style.cursor = 'col-resize'
   document.body.style.userSelect = 'none'
   document.addEventListener('mousemove', onMouseMove)
@@ -260,35 +275,39 @@ const handleCreate = (command) => {
       cancelButtonText: '取消',
       inputPattern: /\S+/,
       inputErrorMessage: '文件名不能为空'
-    }).then(({ value }) => {
-      const fileName = value.endsWith('.md') ? value : `${value}.md`
-      const newFile = {
-        id: Date.now(),
-        name: fileName,
-        type: 'file',
-        updateTime: new Date().toLocaleString(),
-        content: `# ${value}\n\n开始写作...`
-      }
-      filesStore.addFile(newFile)
-      currentFileId.value = newFile.id
-      ElMessage.success('文件创建成功')
-    }).catch(() => {})
+    })
+      .then(({ value }) => {
+        const fileName = value.endsWith('.md') ? value : `${value}.md`
+        const newFile = {
+          id: Date.now(),
+          name: fileName,
+          type: 'file',
+          updateTime: new Date().toLocaleString()
+          // content: `# ${value}\n\n开始写作...`
+        }
+        filesStore.addFile(newFile)
+        currentFileId.value = newFile.id
+        ElMessage.success('文件创建成功')
+      })
+      .catch(() => {})
   } else if (command === 'folder') {
     ElMessageBox.prompt('请输入文件夹名称', '新建文件夹', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       inputPattern: /\S+/,
       inputErrorMessage: '文件夹名称不能为空'
-    }).then(({ value }) => {
-      filesStore.addFile({
-        id: Date.now(),
-        name: value,
-        type: 'folder',
-        updateTime: new Date().toLocaleString(),
-        children: []
+    })
+      .then(({ value }) => {
+        filesStore.addFile({
+          id: Date.now(),
+          name: value,
+          type: 'folder',
+          updateTime: new Date().toLocaleString(),
+          children: []
+        })
+        ElMessage.success('文件夹创建成功')
       })
-      ElMessage.success('文件夹创建成功')
-    }).catch(() => {})
+      .catch(() => {})
   }
 }
 
@@ -298,14 +317,16 @@ const handleDelete = (file) => {
   ElMessageBox.confirm(msg, '警告', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
-    type: 'warning',
-  }).then(() => {
-    if (currentFileId.value === file.id) {
-      currentFileId.value = null
-    }
-    filesStore.deleteFile(file.id)
-    ElMessage.success('删除成功')
-  }).catch(() => {})
+    type: 'warning'
+  })
+    .then(() => {
+      if (currentFileId.value === file.id) {
+        currentFileId.value = null
+      }
+      filesStore.deleteFile(file.id)
+      ElMessage.success('删除成功')
+    })
+    .catch(() => {})
 }
 
 // 重命名
@@ -319,20 +340,22 @@ const handleRename = (file) => {
     inputValue: file.type === 'file' ? file.name.replace(/\.md$/, '') : file.name,
     inputPattern: /\S+/,
     inputErrorMessage: '名称不能为空'
-  }).then(({ value }) => {
-    let newName = value.trim()
-    if (file.type === 'file') {
-      newName = `${newName.replace(/\.md$/i, '')}.md`
-    }
-    filesStore.updateFile(file.id, { 
-      name: newName, 
-      updateTime: new Date().toLocaleString() 
+  })
+    .then(({ value }) => {
+      let newName = value.trim()
+      if (file.type === 'file') {
+        newName = `${newName.replace(/\.md$/i, '')}.md`
+      }
+      filesStore.updateFile(file.id, {
+        name: newName,
+        updateTime: new Date().toLocaleString()
+      })
+      if (currentFileId.value === file.id) {
+        currentFileId.value = file.id
+      }
+      ElMessage.success('重命名成功')
     })
-    if (currentFileId.value === file.id) {
-      currentFileId.value = file.id
-    }
-    ElMessage.success('重命名成功')
-  }).catch(() => {})
+    .catch(() => {})
 }
 
 const handleNodeCommand = (cmd, data) => {

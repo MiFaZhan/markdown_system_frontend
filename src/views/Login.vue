@@ -11,10 +11,18 @@
           <el-input v-model="form.username" placeholder="用户名 (admin)" :prefix-icon="User" />
         </el-form-item>
         <el-form-item>
-          <el-input v-model="form.password" type="password" placeholder="密码 (123456)" :prefix-icon="Lock" show-password />
+          <el-input
+            v-model="form.password"
+            type="password"
+            placeholder="密码 (123456)"
+            :prefix-icon="Lock"
+            show-password
+          />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" class="w-100" @click="handleLogin" :loading="loading">登录</el-button>
+          <el-button type="primary" class="w-100" :loading="loading" @click="handleLogin"
+            >登录</el-button
+          >
         </el-form-item>
       </el-form>
       <div class="tips">提示: admin / 123456</div>
@@ -40,7 +48,7 @@ const form = reactive({
 
 const handleLogin = async () => {
   if (!form.username || !form.password) return ElMessage.warning('请输入用户名和密码')
-  
+
   loading.value = true
   try {
     await store.login(form.username, form.password)

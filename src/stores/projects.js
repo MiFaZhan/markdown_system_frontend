@@ -278,7 +278,7 @@ const [count, setCount] = useState(0)
   const currentProjectId = ref(null)
 
   const currentProject = () => {
-    return projectList.value.find(p => p.id === currentProjectId.value)
+    return projectList.value.find((p) => p.id === currentProjectId.value)
   }
 
   const setCurrentProject = (id) => {
@@ -286,7 +286,7 @@ const [count, setCount] = useState(0)
   }
 
   const getProject = (id) => {
-    return projectList.value.find(p => p.id === id)
+    return projectList.value.find((p) => p.id === id)
   }
 
   const addProject = (project) => {
@@ -294,14 +294,14 @@ const [count, setCount] = useState(0)
   }
 
   const updateProject = (id, data) => {
-    const project = projectList.value.find(p => p.id === id)
+    const project = projectList.value.find((p) => p.id === id)
     if (project) {
       Object.assign(project, data)
     }
   }
 
   const deleteProject = (id) => {
-    const index = projectList.value.findIndex(p => p.id === id)
+    const index = projectList.value.findIndex((p) => p.id === id)
     if (index !== -1) {
       projectList.value.splice(index, 1)
     }

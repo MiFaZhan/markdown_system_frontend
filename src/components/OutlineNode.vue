@@ -1,31 +1,26 @@
 <template>
   <div class="outline-node">
-    <div 
+    <div
       class="outline-item"
       :class="{ 'has-children': node.children && node.children.length > 0 }"
       @click="handleClick"
     >
-      <span 
-        v-if="node.children && node.children.length > 0" 
+      <span
+        v-if="node.children && node.children.length > 0"
         class="expand-icon"
         @click.stop="toggleExpand"
       >
-        <svg 
-          viewBox="0 0 24 24" 
-          width="12" 
-          height="12"
-          :class="{ expanded: expanded }"
-        >
-          <path fill="currentColor" d="M8 5v14l11-7z"/>
+        <svg viewBox="0 0 24 24" width="12" height="12" :class="{ expanded: expanded }">
+          <path fill="currentColor" d="M8 5v14l11-7z" />
         </svg>
       </span>
       <span class="item-text">{{ node.text }}</span>
     </div>
-    
+
     <div v-if="node.children && node.children.length > 0 && expanded" class="outline-children">
-      <OutlineNode 
-        v-for="(child, index) in node.children" 
-        :key="index" 
+      <OutlineNode
+        v-for="(child, index) in node.children"
+        :key="index"
         :node="child"
         @click-heading="$emit('click-heading', $event)"
       />
@@ -69,7 +64,9 @@ const handleClick = () => {
   color: var(--color-text);
   cursor: pointer;
   border-radius: 4px;
-  transition: background-color 0.15s, color 0.15s;
+  transition:
+    background-color 0.15s,
+    color 0.15s;
 }
 
 .outline-item:hover {

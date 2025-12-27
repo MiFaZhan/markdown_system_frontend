@@ -12,10 +12,10 @@
 
     <main class="projects-main">
       <h2 class="section-title">我的项目</h2>
-      
+
       <div class="projects-grid">
-        <div 
-          v-for="project in projectsStore.projectList" 
+        <div
+          v-for="project in projectsStore.projectList"
           :key="project.id"
           class="project-card"
           @click="enterProject(project)"
@@ -46,15 +46,19 @@
     </main>
 
     <!-- 新建/编辑项目对话框 -->
-    <el-dialog v-model="dialogVisible" :title="editingProject ? '编辑项目' : '新建项目'" width="400px">
+    <el-dialog
+      v-model="dialogVisible"
+      :title="editingProject ? '编辑项目' : '新建项目'"
+      width="400px"
+    >
       <el-form :model="projectForm" label-width="80px">
         <el-form-item label="项目名称">
           <el-input v-model="projectForm.name" placeholder="请输入项目名称" />
         </el-form-item>
         <el-form-item label="项目图标">
           <div class="icon-selector">
-            <div 
-              v-for="icon in iconList" 
+            <div
+              v-for="icon in iconList"
               :key="icon"
               class="icon-option"
               :class="{ active: projectForm.icon === icon }"
@@ -65,7 +69,12 @@
           </div>
         </el-form-item>
         <el-form-item label="项目描述">
-          <el-input v-model="projectForm.description" type="textarea" :rows="3" placeholder="请输入项目描述" />
+          <el-input
+            v-model="projectForm.description"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入项目描述"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -98,10 +107,38 @@ const projectForm = ref({
 
 // 可选图标列表
 const iconList = [
-  '📁', '📂', '📚', '📖', '📝', '✏️', '📋', '📄',
-  '💼', '🎯', '🚀', '💡', '🔧', '⚙️', '🎨', '🎬',
-  '🎵', '🎮', '📷', '🌟', '❤️', '🔥', '✨', '🌈',
-  '🏠', '🌍', '🎁', '📦', '🔒', '🔑', '💰', '📊'
+  '📁',
+  '📂',
+  '📚',
+  '📖',
+  '📝',
+  '✏️',
+  '📋',
+  '📄',
+  '💼',
+  '🎯',
+  '🚀',
+  '💡',
+  '🔧',
+  '⚙️',
+  '🎨',
+  '🎬',
+  '🎵',
+  '🎮',
+  '📷',
+  '🌟',
+  '❤️',
+  '🔥',
+  '✨',
+  '🌈',
+  '🏠',
+  '🌍',
+  '🎁',
+  '📦',
+  '🔒',
+  '🔑',
+  '💰',
+  '📊'
 ]
 
 const showCreateDialog = () => {
@@ -129,10 +166,12 @@ const handleCommand = (command, project) => {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
-    }).then(() => {
-      projectsStore.deleteProject(project.id)
-      ElMessage.success('删除成功')
-    }).catch(() => {})
+    })
+      .then(() => {
+        projectsStore.deleteProject(project.id)
+        ElMessage.success('删除成功')
+      })
+      .catch(() => {})
   }
 }
 

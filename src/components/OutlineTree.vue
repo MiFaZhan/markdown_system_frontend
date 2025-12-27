@@ -1,14 +1,12 @@
 <template>
   <div class="outline-tree">
-    <OutlineNode 
-      v-for="(node, index) in treeData" 
-      :key="index" 
+    <OutlineNode
+      v-for="(node, index) in treeData"
+      :key="index"
       :node="node"
       @click-heading="$emit('click-heading', $event)"
     />
-    <div v-if="treeData.length === 0" class="outline-empty">
-      暂无大纲
-    </div>
+    <div v-if="treeData.length === 0" class="outline-empty">暂无大纲</div>
   </div>
 </template>
 
@@ -29,26 +27,26 @@ defineEmits(['click-heading'])
 const treeData = computed(() => {
   const items = props.outline
   if (!items.length) return []
-  
+
   const root = []
   const stack = [{ level: 0, children: root }]
-  
+
   for (const item of items) {
     const node = {
       ...item,
       children: [],
       expanded: true
     }
-    
+
     // 找到合适的父节点
     while (stack.length > 1 && stack[stack.length - 1].level >= item.level) {
       stack.pop()
     }
-    
+
     stack[stack.length - 1].children.push(node)
     stack.push({ level: item.level, children: node.children })
   }
-  
+
   return root
 })
 </script>

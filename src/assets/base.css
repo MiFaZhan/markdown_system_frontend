@@ -53,7 +53,7 @@
   --color-primary: var(--el-color-primary);
 
   --section-gap: 160px;
-  
+
   /* Element Plus 主题适配 */
   --el-bg-color: var(--vt-c-white);
   --el-bg-color-overlay: var(--vt-c-white);
@@ -219,12 +219,12 @@ body {
   }
 
   /* 图片反色滤镜（可选，模拟 Dark Reader 效果） */
-  img:not([src*=".svg"]) {
+  img:not([src*='.svg']) {
     filter: brightness(0.9) contrast(1.05);
   }
 
   /* Element Plus 组件深度定制 */
-  
+
   /* 按钮悬停效果 */
   .el-button:hover {
     background-color: var(--dr-bg-hover) !important;
