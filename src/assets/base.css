@@ -50,6 +50,7 @@
   --color-heading: var(--vt-c-text-light-1);
   --color-text: var(--vt-c-text-light-1);
   --color-text-secondary: rgba(60, 60, 60, 0.66);
+  --color-primary: var(--el-color-primary);
 
   --section-gap: 160px;
   
@@ -104,6 +105,7 @@
     --el-color-primary-light-7: #2f5797;
     --el-color-primary-light-9: #223f6e;
     --el-color-primary-dark-2: var(--dr-accent-hover);
+    --color-primary: var(--dr-accent);
 
     /* 表格 Dark Reader 风格 */
     --el-table-bg-color: var(--dr-bg-secondary);

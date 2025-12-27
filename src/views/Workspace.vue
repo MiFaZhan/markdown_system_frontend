@@ -1,7 +1,19 @@
 <template>
-  <div class="workspace-layout">
+  <div class="workspace-layout" :class="{ 'is-mobile': isMobile }">
+    <!-- 移动端遮罩层 -->
+    <div 
+      class="mobile-overlay" 
+      v-if="isMobile && (showSidebar || showOutline)"
+      @click="closeMobilePanels"
+    ></div>
+
     <!-- 左侧文件列表 -->
-    <aside class="sidebar" v-if="showSidebar" :style="{ width: sidebarWidth + 'px' }">
+    <aside 
+      class="sidebar" 
+      :class="{ 'mobile-sidebar': isMobile }"
+      v-if="showSidebar" 
+      :style="{ width: sidebarWidth + 'px' }"
+    >
       <div class="sidebar-header">
         <el-button :icon="Back" link @click="goBack">返回</el-button>
         <span class="project-name">{{ currentProject?.name }}</span>
@@ -35,11 +47,12 @@
                 <Folder v-if="data.type === 'folder'" />
                 <Document v-else />
               </el-icon>
-              <span class="node-label">{{ node.label }}</span>
-              <el-dropdown trigger="click" @command="(cmd) => cmd === 'delete' && handleDelete(data)" @click.stop>
+              <span class="node-label">{{ data.type === 'file' ? node.label.replace(/\.md$/, '') : node.label }}</span>
+              <el-dropdown trigger="click" @command="(cmd) => handleNodeCommand(cmd, data)" @click.stop>
                 <el-icon class="node-more"><Setting /></el-icon>
                 <template #dropdown>
                   <el-dropdown-menu>
+                    <el-dropdown-item command="rename">修改</el-dropdown-item>
                     <el-dropdown-item command="delete">删除</el-dropdown-item>
                   </el-dropdown-menu>
                 </template>
@@ -55,26 +68,23 @@
     
     <!-- 中间编辑区 -->
     <main class="editor-area">
-      <template v-if="currentFile">
-        <EditorPanel 
-          :file="currentFile" 
-          :show-outline="showOutline"
-          :show-sidebar="showSidebar"
-          @update-outline="updateOutline"
-          @toggle-outline="toggleOutline"
-          @toggle-sidebar="toggleSidebar"
-        />
-      </template>
-      <template v-else>
-        <div class="empty-state">
-          <el-icon :size="64" color="#ddd"><Document /></el-icon>
-          <p>选择一个文件开始编辑</p>
-        </div>
-      </template>
+      <EditorPanel 
+        :file="currentFile" 
+        :show-outline="showOutline"
+        :show-sidebar="showSidebar"
+        @update-outline="updateOutline"
+        @toggle-outline="toggleOutline"
+        @toggle-sidebar="toggleSidebar"
+      />
     </main>
     
     <!-- 右侧大纲 -->
-    <aside class="outline-panel" v-if="currentFile && showOutline" :style="{ width: outlineWidth + 'px' }">
+    <aside 
+      class="outline-panel" 
+      :class="{ 'mobile-outline': isMobile }"
+      v-if="currentFile && showOutline" 
+      :style="{ width: outlineWidth + 'px' }"
+    >
       <!-- 拖拽条 -->
       <div class="resize-handle resize-handle-left" @mousedown="startResize('outline', $event)"></div>
       <div class="outline-header">大纲</div>
@@ -86,7 +96,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Plus, Document, Folder, Setting, Search, Back } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -100,11 +110,56 @@ const router = useRouter()
 const filesStore = useFilesStore()
 const projectsStore = useProjectsStore()
 
+let lastWidth = window.innerWidth
+let resizeTimer = null
+const isMobile = ref(false)
+
+// 响应式布局检查
+const checkResponsive = (isInit = false) => {
+  const width = window.innerWidth
+  isMobile.value = width < 700
+  
+  // 大纲自动隐藏阈值 (1000px)
+  if (width < 1000) {
+    if (isInit || (lastWidth >= 1000 && showOutline.value)) {
+      showOutline.value = false
+    }
+  }
+  
+  // 侧边栏自动隐藏阈值 (700px)
+  if (width < 700) {
+    if (isInit || (lastWidth >= 700 && showSidebar.value)) {
+      showSidebar.value = false
+    }
+  }
+  
+  lastWidth = width
+}
+
+const handleResize = () => {
+  // 使用 requestAnimationFrame 简单的节流
+  if (resizeTimer) return
+  resizeTimer = requestAnimationFrame(() => {
+    checkResponsive(false)
+    resizeTimer = null
+  })
+}
+
 // 初始化项目
 onMounted(() => {
   const projectId = Number(route.params.projectId)
   if (projectId) {
     projectsStore.setCurrentProject(projectId)
+  }
+  
+  checkResponsive(true)
+  window.addEventListener('resize', handleResize)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
+  if (resizeTimer) {
+    cancelAnimationFrame(resizeTimer)
   }
 })
 
@@ -125,11 +180,17 @@ const showSidebar = ref(true)
 // 切换大纲显示
 const toggleOutline = () => {
   showOutline.value = !showOutline.value
+  if (isMobile.value && showOutline.value) {
+    showSidebar.value = false // 移动端互斥显示
+  }
 }
 
 // 切换侧边栏显示
 const toggleSidebar = () => {
   showSidebar.value = !showSidebar.value
+  if (isMobile.value && showSidebar.value) {
+    showOutline.value = false // 移动端互斥显示
+  }
 }
 
 // 搜索
@@ -138,6 +199,12 @@ const searchKeyword = ref('')
 // 面板宽度
 const sidebarWidth = ref(260)
 const outlineWidth = ref(200)
+
+// 关闭移动端面板
+const closeMobilePanels = () => {
+  showSidebar.value = false
+  showOutline.value = false
+}
 
 // 返回项目列表
 const goBack = () => {
@@ -179,6 +246,9 @@ const startResize = (panel, e) => {
 const selectFile = (file) => {
   if (file.type !== 'folder') {
     currentFileId.value = file.id
+    if (isMobile.value) {
+      showSidebar.value = false
+    }
   }
 }
 
@@ -238,6 +308,38 @@ const handleDelete = (file) => {
   }).catch(() => {})
 }
 
+// 重命名
+const handleRename = (file) => {
+  const title = '重命名'
+  const placeholder = file.type === 'folder' ? '新的文件夹名称' : '新的文件名'
+  ElMessageBox.prompt('', title, {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    inputPlaceholder: placeholder,
+    inputValue: file.type === 'file' ? file.name.replace(/\.md$/, '') : file.name,
+    inputPattern: /\S+/,
+    inputErrorMessage: '名称不能为空'
+  }).then(({ value }) => {
+    let newName = value.trim()
+    if (file.type === 'file') {
+      newName = `${newName.replace(/\.md$/i, '')}.md`
+    }
+    filesStore.updateFile(file.id, { 
+      name: newName, 
+      updateTime: new Date().toLocaleString() 
+    })
+    if (currentFileId.value === file.id) {
+      currentFileId.value = file.id
+    }
+    ElMessage.success('重命名成功')
+  }).catch(() => {})
+}
+
+const handleNodeCommand = (cmd, data) => {
+  if (cmd === 'rename') return handleRename(data)
+  if (cmd === 'delete') return handleDelete(data)
+}
+
 // 更新大纲
 const updateOutline = (headings) => {
   outline.value = headings
@@ -246,6 +348,9 @@ const updateOutline = (headings) => {
 // 跳转到标题
 const scrollToHeading = (heading) => {
   window.dispatchEvent(new CustomEvent('scroll-to-heading', { detail: heading }))
+  if (isMobile.value) {
+    showOutline.value = false
+  }
 }
 </script>
 
@@ -264,6 +369,28 @@ const scrollToHeading = (heading) => {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+  z-index: 10;
+}
+
+.mobile-sidebar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  height: 100%;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+}
+
+.mobile-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 99;
+  backdrop-filter: blur(2px);
 }
 
 /* 拖拽条 */
@@ -374,6 +501,11 @@ const scrollToHeading = (heading) => {
   opacity: 1;
 }
 
+/* 移动端始终显示齿轮按钮，避免 hover 不可用 */
+.is-mobile .node-more {
+  opacity: 1;
+}
+
 /* 中间编辑区 */
 .editor-area {
   flex: 1;
@@ -381,19 +513,6 @@ const scrollToHeading = (heading) => {
   flex-direction: column;
   overflow: hidden;
   background: var(--color-background);
-}
-
-.empty-state {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: #999;
-}
-
-.empty-state p {
-  margin-top: 16px;
 }
 
 /* 右侧大纲 */
@@ -404,6 +523,18 @@ const scrollToHeading = (heading) => {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
+}
+
+/* 覆盖样式，确保移动端模式下是 absolute */
+.outline-panel.mobile-outline {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  height: 100%;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+  border-left: none !important;
 }
 
 .outline-header {

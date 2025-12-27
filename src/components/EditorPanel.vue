@@ -1,17 +1,50 @@
 <template>
   <div class="editor-panel">
     <header class="editor-header">
-      <el-input 
-        v-model="title" 
-        placeholder="请输入标题..." 
-        class="title-input"
-        @blur="saveTitle"
-      />
-      <el-button type="primary" size="small" @click="save">保存</el-button>
+      <el-tooltip
+        v-model:visible="sidebarTipVisible"
+        :content="showSidebar ? '收起侧边栏' : '展开侧边栏'"
+        placement="bottom"
+        trigger="hover"
+        :enterable="false"
+        :show-after="80"
+        :hide-after="120"
+      >
+        <el-button 
+          :icon="showSidebar ? Fold : Expand" 
+          link 
+          @click="() => { sidebarTipVisible = false; $emit('toggle-sidebar') }"
+          class="header-icon-btn"
+        />
+      </el-tooltip>
+
+      <template v-if="file">
+        <el-tooltip
+          v-model:visible="outlineTipVisible"
+          :content="showOutline ? '隐藏大纲' : '显示大纲'"
+          placement="bottom"
+          trigger="hover"
+          :enterable="false"
+          :show-after="80"
+          :hide-after="120"
+        >
+          <el-button 
+            :icon="List" 
+            link 
+            @click="() => { outlineTipVisible = false; $emit('toggle-outline') }"
+            class="header-icon-btn"
+            :type="showOutline ? 'primary' : ''"
+          />
+        </el-tooltip>
+      </template>
     </header>
     
-    <div class="editor-body">
-      <div id="vditor"></div>
+    <div class="editor-body" ref="editorBodyRef">
+      <div v-if="file" id="vditor"></div>
+      <div v-else class="empty-state">
+        <el-icon :size="64" color="#ddd"><Document /></el-icon>
+        <p>选择一个文件开始编辑</p>
+      </div>
     </div>
   </div>
 </template>
@@ -20,13 +53,14 @@
 import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import Vditor from 'vditor'
 import 'vditor/dist/index.css'
-import { ElMessage } from 'element-plus'
+import { Fold, Expand, List, Document } from '@element-plus/icons-vue'
 import { useFilesStore } from '../stores/files'
 
 const props = defineProps({
   file: {
     type: Object,
-    required: true
+    required: false,
+    default: null
   },
   showOutline: {
     type: Boolean,
@@ -41,8 +75,11 @@ const props = defineProps({
 const emit = defineEmits(['update-outline', 'toggle-outline', 'toggle-sidebar'])
 
 const filesStore = useFilesStore()
-const title = ref('')
 const vditorInstance = ref(null)
+const editorBodyRef = ref(null)
+let resizeObserver = null
+const sidebarTipVisible = ref(false)
+const outlineTipVisible = ref(false)
 
 // 检测系统是否为深色模式
 const isDarkMode = () => window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -67,7 +104,10 @@ const parseOutline = (content) => {
 const initEditor = () => {
   if (vditorInstance.value) {
     vditorInstance.value.destroy()
+    vditorInstance.value = null
   }
+
+  if (!props.file) return
   
   const dark = isDarkMode()
   
@@ -94,29 +134,12 @@ const initEditor = () => {
       pin: true,
     },
     toolbar: [
-      {
-        name: 'custom-sidebar',
-        tip: '文件列表',
-        icon: '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M3 3h8v18H3V3zm10 0h8v8h-8V3zm0 10h8v8h-8v-8z"/></svg>',
-        click: () => {
-          emit('toggle-sidebar')
-        }
-      },
-      '|',
       'headings', 'bold', 'italic', 'strike', 'link', '|',
       'list', 'ordered-list', 'check', 'outdent', 'indent', '|',
       'quote', 'line', 'code', 'inline-code', '|',
       'upload', 'table', '|',
       'undo', 'redo', '|',
-      'preview', 'fullscreen', '|',
-      {
-        name: 'custom-outline',
-        tip: '大纲',
-        icon: '<svg viewBox="0 0 24 24" width="16" height="16"><path fill="currentColor" d="M3 4h18v2H3V4zm0 7h12v2H3v-2zm0 7h18v2H3v-2z"/></svg>',
-        click: () => {
-          emit('toggle-outline')
-        }
-      }
+      'preview', 'fullscreen'
     ],
     input: (value) => {
       parseOutline(value)
@@ -130,45 +153,30 @@ const initEditor = () => {
 // 加载内容
 const loadContent = () => {
   if (props.file) {
-    title.value = props.file.name.replace(/\.md$/, '')
     vditorInstance.value?.setValue(props.file.content || '')
     parseOutline(props.file.content || '')
   }
 }
 
-// 保存标题
-const saveTitle = () => {
-  if (props.file && title.value) {
-    const fileName = title.value.endsWith('.md') ? title.value : `${title.value}.md`
-    filesStore.updateFile(props.file.id, { name: fileName })
-  }
-}
-
-// 保存内容
-const save = () => {
-  if (!title.value) {
-    ElMessage.warning('请输入标题')
-    return
-  }
-  
-  const content = vditorInstance.value?.getValue() || ''
-  const fileName = title.value.endsWith('.md') ? title.value : `${title.value}.md`
-  
-  filesStore.updateFile(props.file.id, {
-    name: fileName,
-    content,
-    updateTime: new Date().toLocaleString()
-  })
-  
-  ElMessage.success('保存成功')
-}
-
 // 监听文件变化
 watch(() => props.file?.id, (newId, oldId) => {
   if (newId !== oldId) {
-    nextTick(() => {
-      loadContent()
-    })
+    if (newId) {
+      nextTick(() => {
+        // 如果之前没有文件，现在有了，可能需要初始化编辑器
+        if (!vditorInstance.value) {
+          initEditor()
+        } else {
+          loadContent()
+        }
+      })
+    } else {
+      // 如果变成了没有文件，销毁编辑器
+      if (vditorInstance.value) {
+        vditorInstance.value.destroy()
+        vditorInstance.value = null
+      }
+    }
   }
 }, { immediate: false })
 
@@ -239,15 +247,35 @@ onMounted(() => {
       )
     }
   })
+
+  // 监听容器大小变化，解决布局切换时编辑器宽度不更新的问题
+  resizeObserver = new ResizeObserver(() => {
+    // 延迟触发 resize 事件，确保 flex 布局已经计算完成
+    requestAnimationFrame(() => {
+      window.dispatchEvent(new Event('resize'))
+    })
+  })
+  
+  if (editorBodyRef.value) {
+    resizeObserver.observe(editorBodyRef.value)
+  }
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('scroll-to-heading', handleScrollToHeading)
+  if (resizeObserver) {
+    resizeObserver.disconnect()
+    resizeObserver = null
+  }
   if (vditorInstance.value) {
     vditorInstance.value.destroy()
     vditorInstance.value = null
   }
 })
+
+// 任何外部导致显示状态变化时，强制关闭提示
+watch(() => props.showSidebar, () => { sidebarTipVisible.value = false })
+watch(() => props.showOutline, () => { outlineTipVisible.value = false })
 </script>
 
 <style scoped>
@@ -265,6 +293,17 @@ onBeforeUnmount(() => {
   gap: 12px;
   background: var(--color-background);
   border-bottom: 1px solid var(--color-border);
+}
+
+.header-icon-btn {
+  font-size: 18px;
+  color: var(--color-text-secondary);
+  padding: 8px;
+}
+
+.header-icon-btn:hover {
+  color: var(--color-primary);
+  background: var(--color-background-mute);
 }
 
 .title-input {
@@ -285,19 +324,43 @@ onBeforeUnmount(() => {
 .editor-body {
   flex: 1;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 #vditor {
   height: 100% !important;
 }
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+}
+
+.empty-state p {
+  margin-top: 16px;
+}
+
+/* Dark Reader 风格深色模式 */
+@media (prefers-color-scheme: dark) {
+  .empty-state {
+    color: var(--dr-text-muted, #8a8785);
+  }
+}
 </style>
 
 <style>
-/* Vditor 工具栏靠左 */
-.vditor-toolbar.vditor-toolbar--pin {
+/* Vditor 工具栏居中 */
+.vditor-toolbar {
   display: flex !important;
-  justify-content: flex-start !important;
+  justify-content: center !important;
   flex-wrap: wrap !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 
 /* 禁用 Vditor 聚焦时的背景色变化 */
