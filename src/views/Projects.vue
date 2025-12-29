@@ -26,8 +26,8 @@
             <p class="project-desc">{{ project.description || '暂无描述' }}</p>
             <span class="project-time">{{ project.updateTime }}</span>
           </div>
-          <el-dropdown trigger="click" @click.stop @command="handleCommand($event, project)">
-            <el-icon class="project-more"><MoreFilled /></el-icon>
+          <el-dropdown trigger="click" @command="handleCommand($event, project)">
+            <el-icon class="project-more" @click.stop><MoreFilled /></el-icon>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="edit">编辑</el-dropdown-item>
@@ -306,14 +306,14 @@ const saveProject = () => {
   top: 16px;
   right: 16px;
   font-size: 18px;
-  color: #909399;
+  color: #606266;
   cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.2s;
+  opacity: 1;
+  z-index: 10;
 }
 
-.project-card:hover .project-more {
-  opacity: 1;
+.project-card {
+  overflow: visible;
 }
 
 .empty-state {
@@ -387,6 +387,26 @@ const saveProject = () => {
   .icon-option.active {
     border-color: var(--dr-accent, #5c9aff);
     background: rgba(92, 154, 255, 0.15);
+  }
+
+  /* 退出登录按钮深色模式优化 */
+  .header-right .el-button--danger.is-link {
+    color: var(--dr-danger, #d96459) !important;
+    background-color: transparent !important;
+    border: none !important;
+    opacity: 0.85;
+    transition: all 0.3s ease;
+  }
+
+  .header-right .el-button--danger.is-link:hover {
+    color: var(--dr-danger-hover, #e57469) !important;
+    opacity: 1 !important;
+    background-color: rgba(217, 100, 89, 0.1) !important;
+  }
+
+  .header-right .el-button--danger.is-link:focus {
+    color: var(--dr-danger-hover, #e57469) !important;
+    background-color: rgba(217, 100, 89, 0.15) !important;
   }
 }
 </style>
