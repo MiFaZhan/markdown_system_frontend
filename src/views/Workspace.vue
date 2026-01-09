@@ -16,7 +16,7 @@
     >
       <div class="sidebar-header">
         <el-button :icon="Back" link @click="goBack">返回</el-button>
-        <span class="project-name">{{ currentProject?.name }}</span>
+        <span class="project-name">{{ decodeURIComponent(route.params.projectName || '') }}</span>
         <el-dropdown trigger="click" @command="handleCreate">
           <el-button :icon="Plus" circle size="small" />
           <template #dropdown>
@@ -38,7 +38,13 @@
       </div>
 
       <div class="file-tree">
+        <div v-if="fileTree.length === 0" class="empty-files">
+          <el-icon :size="48" :color="'var(--el-text-color-placeholder)'"><FolderOpened /></el-icon>
+          <p>暂无文件</p>
+          <p class="empty-tip">点击上方 + 按钮创建文件</p>
+        </div>
         <el-tree
+          v-else
           :data="fileTree"
           node-key="id"
           default-expand-all
@@ -113,9 +119,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Plus, Document, Folder, Setting, Search, Back } from '@element-plus/icons-vue'
+import { Plus, Document, Folder, Setting, Search, Back, FolderOpened } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useFilesStore } from '../stores/files'
 import { useProjectsStore } from '../stores/projects'
@@ -164,11 +170,7 @@ const handleResize = () => {
 
 // 初始化项目
 onMounted(() => {
-  const projectId = Number(route.params.projectId)
-  if (projectId) {
-    projectsStore.setCurrentProject(projectId)
-  }
-
+  // 响应式布局初始化
   checkResponsive(true)
   window.addEventListener('resize', handleResize)
 })
@@ -182,12 +184,25 @@ onBeforeUnmount(() => {
 
 const currentProject = computed(() => projectsStore.currentProject())
 
+// 监听路由变化，处理项目切换
+watch(() => route.params.projectName, async (newProjectName) => {
+  if (newProjectName) {
+    console.log('项目名称:', newProjectName)
+    
+    // 重置当前选中的文件
+    currentFileId.value = null
+    
+    // 暂时先不验证项目，直接显示页面
+    // 后续可以根据需要添加项目验证逻辑
+  }
+}, { immediate: true })
+
 // 当前选中的文件ID
 const currentFileId = ref(null)
 const currentFile = computed(() => filesStore.getFile(currentFileId.value))
 
-// 文件树数据
-const fileTree = computed(() => filesStore.fileList)
+// 文件树数据（暂时为空，显示空状态）
+const fileTree = computed(() => [])
 
 // 大纲数据
 const outline = ref([])
@@ -384,6 +399,14 @@ const scrollToHeading = (heading) => {
   width: 100vw;
 }
 
+.page-loading {
+  flex: 1;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
 /* 左侧边栏 */
 .sidebar {
   position: relative;
@@ -427,7 +450,7 @@ const scrollToHeading = (heading) => {
 }
 
 .resize-handle:hover {
-  background: #409eff;
+  background: var(--el-color-primary);
 }
 
 .resize-handle-right {
@@ -466,6 +489,26 @@ const scrollToHeading = (heading) => {
   padding: 0 8px;
 }
 
+.empty-files {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--el-text-color-placeholder);
+}
+
+.empty-files p {
+  margin: 8px 0 0 0;
+  font-size: 14px;
+}
+
+.empty-tip {
+  font-size: 12px !important;
+  opacity: 0.8;
+}
+
 .tree-node {
   display: flex;
   align-items: center;
@@ -479,7 +522,7 @@ const scrollToHeading = (heading) => {
 }
 
 .tree-node.active {
-  background: #ecf5ff;
+  background: var(--el-color-primary-light-9);
 }
 
 /* Dark Reader 风格深色模式 */
@@ -503,7 +546,7 @@ const scrollToHeading = (heading) => {
 
 .node-icon {
   margin-right: 6px;
-  color: #909399;
+  color: var(--el-text-color-placeholder);
 }
 
 .node-label {
@@ -517,7 +560,7 @@ const scrollToHeading = (heading) => {
 .node-more {
   opacity: 0;
   cursor: pointer;
-  color: #909399;
+  color: var(--el-text-color-placeholder);
 }
 
 .tree-node:hover .node-more {

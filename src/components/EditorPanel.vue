@@ -52,7 +52,7 @@
     <div ref="editorBodyRef" class="editor-body">
       <div v-if="file" id="vditor"></div>
       <div v-else class="empty-state">
-        <el-icon :size="64" color="#ddd"><Document /></el-icon>
+        <el-icon :size="64" :color="'var(--el-text-color-placeholder)'"><Document /></el-icon>
         <p>选择一个文件开始编辑</p>
       </div>
     </div>
@@ -381,7 +381,7 @@ watch(
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #999;
+  color: var(--el-text-color-placeholder);
 }
 
 .empty-state p {
@@ -434,7 +434,7 @@ watch(
 
 /* 标题高亮效果 */
 .heading-highlight {
-  background-color: #fff3cd !important;
+  background-color: var(--el-color-warning-light-8) !important;
   border-radius: 4px;
   transition: background-color 0.3s ease;
 }

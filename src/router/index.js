@@ -16,7 +16,7 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
-      path: '/project/:projectId',
+      path: '/project/:projectName',
       name: 'Workspace',
       component: () => import('../views/Workspace.vue'),
       meta: { requiresAuth: true }
@@ -27,11 +27,14 @@ const router = createRouter({
 // 路由守卫：未登录跳转到登录页
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
+  
+  // 检查登录状态
   if (to.meta.requiresAuth && !userStore.token) {
     next('/login')
-  } else {
-    next()
+    return
   }
+  
+  next()
 })
 
 export default router

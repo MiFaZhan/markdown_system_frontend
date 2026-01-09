@@ -11,37 +11,180 @@
     </header>
 
     <main class="projects-main">
-      <h2 class="section-title">我的项目</h2>
+      <div class="section-header">
+        <h2 class="section-title">我的项目</h2>
+        <div class="section-controls">
+          <el-button-group style="margin-right: 15px;">
+            <el-button 
+              :type="viewMode === 'card' ? 'primary' : ''" 
+              :icon="Grid" 
+              @click="viewMode = 'card'"
+              size="small"
+            >
+              卡片
+            </el-button>
+            <el-button 
+              :type="viewMode === 'list' ? 'primary' : ''" 
+              :icon="List" 
+              @click="viewMode = 'list'"
+              size="small"
+            >
+              列表
+            </el-button>
+          </el-button-group>
+          <el-select
+            v-model="sortField"
+            placeholder="排序字段"
+            style="width: 120px; margin-right: 10px"
+            @change="handleSortChange"
+          >
+            <el-option label="创建时间" value="creation_time" />
+            <el-option label="更新时间" value="update_time" />
+            <el-option label="项目名称" value="project_name" />
+          </el-select>
+          <el-select
+            v-model="sortOrder"
+            placeholder="排序方向"
+            style="width: 100px"
+            @change="handleSortChange"
+          >
+            <el-option label="升序" value="asc" />
+            <el-option label="降序" value="desc" />
+          </el-select>
+        </div>
+      </div>
 
-      <div class="projects-grid">
-        <div
-          v-for="project in projectsStore.projectList"
-          :key="project.id"
-          class="project-card"
-          @click="enterProject(project)"
-        >
-          <div class="project-icon">{{ project.icon }}</div>
-          <div class="project-info">
-            <h3 class="project-name">{{ project.name }}</h3>
-            <p class="project-desc">{{ project.description || '暂无描述' }}</p>
-            <span class="project-time">{{ project.updateTime }}</span>
+      <!-- 加载状态 -->
+      <div v-if="projectsStore.loading" class="loading-container">
+        <el-skeleton :rows="3" animated />
+      </div>
+
+      <!-- 项目展示区域 -->
+      <div v-else>
+        <!-- 卡片视图 -->
+        <div v-if="viewMode === 'card'" class="projects-grid">
+          <div
+            v-for="project in projectsStore.projectList"
+            :key="project.id"
+            class="project-card"
+            @click="enterProject(project)"
+          >
+            <div class="project-content">
+              <div class="project-icon">{{ project.icon }}</div>
+              <div class="project-info">
+                <h3 class="project-name">{{ project.name }}</h3>
+                <p 
+                  v-if="project.description"
+                  class="project-desc"
+                >
+                  {{ project.description }}
+                </p>
+                <div class="project-meta">
+                  <span class="project-time">{{ formatDate(project.creationTime) }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="project-actions">
+              <el-dropdown trigger="click" @command="handleCommand($event, project)">
+                <el-button type="text" :icon="MoreFilled" @click.stop />
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="edit">编辑项目</el-dropdown-item>
+                    <el-dropdown-item command="delete">删除项目</el-dropdown-item>
+                    <el-dropdown-item command="view" divided>属性</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
           </div>
-          <el-dropdown trigger="click" @command="handleCommand($event, project)">
-            <el-icon class="project-more" @click.stop><MoreFilled /></el-icon>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="edit">编辑</el-dropdown-item>
-                <el-dropdown-item command="delete" divided>删除</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
+        </div>
+
+        <!-- 列表视图 -->
+        <div v-else class="projects-list">
+          <!-- 表头 -->
+          <div class="projects-list-header">
+            <div class="header-icon"></div>
+            <div 
+              class="header-name sortable-header" 
+              :class="{ active: sortField === 'project_name' }"
+              @click="handleListSort('project_name')"
+            >
+              名称
+              <el-icon v-if="sortField === 'project_name'" class="sort-icon">
+                <ArrowUp v-if="sortOrder === 'asc'" />
+                <ArrowDown v-else />
+              </el-icon>
+            </div>
+            <div 
+              class="header-date sortable-header" 
+              :class="{ active: sortField === 'creation_time' }"
+              @click="handleListSort('creation_time')"
+            >
+              创建时间
+              <el-icon v-if="sortField === 'creation_time'" class="sort-icon">
+                <ArrowUp v-if="sortOrder === 'asc'" />
+                <ArrowDown v-else />
+              </el-icon>
+            </div>
+            <div 
+              class="header-update sortable-header" 
+              :class="{ active: sortField === 'update_time' }"
+              @click="handleListSort('update_time')"
+            >
+              更新时间
+              <el-icon v-if="sortField === 'update_time'" class="sort-icon">
+                <ArrowUp v-if="sortOrder === 'asc'" />
+                <ArrowDown v-else />
+              </el-icon>
+            </div>
+            <div class="header-actions"></div>
+          </div>
+          
+          <!-- 项目列表 -->
+          <div
+            v-for="project in projectsStore.projectList"
+            :key="project.id"
+            class="project-list-item"
+            @click="enterProject(project)"
+          >
+            <div class="list-icon">{{ project.icon }}</div>
+            <div class="list-name">{{ project.name }}</div>
+            <div class="list-date">{{ formatDate(project.creationTime) }}</div>
+            <div class="list-update">{{ formatDate(project.updateTime) }}</div>
+            <div class="list-actions">
+              <el-dropdown trigger="click" @command="handleCommand($event, project)">
+                <el-button type="text" :icon="MoreFilled" @click.stop />
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="edit">编辑项目</el-dropdown-item>
+                    <el-dropdown-item command="delete">删除项目</el-dropdown-item>
+                    <el-dropdown-item command="view" divided>属性</el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
+          </div>
         </div>
 
         <!-- 空状态 -->
-        <div v-if="projectsStore.projectList.length === 0" class="empty-state">
-          <el-icon :size="64" color="#ddd"><FolderOpened /></el-icon>
+        <div v-if="projectsStore.projectList.length === 0 && !projectsStore.loading" class="empty-state">
+          <el-icon :size="64" :color="'var(--el-text-color-placeholder)'"><FolderOpened /></el-icon>
           <p>还没有项目，点击上方按钮创建</p>
         </div>
+      </div>
+
+      <!-- 分页组件 -->
+      <div v-if="projectsStore.pagination.total > 0" class="pagination-container">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[5, 10, 20, 50]"
+          :total="projectsStore.pagination.total"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
       </div>
     </main>
 
@@ -51,8 +194,8 @@
       :title="editingProject ? '编辑项目' : '新建项目'"
       width="400px"
     >
-      <el-form :model="projectForm" label-width="80px">
-        <el-form-item label="项目名称">
+      <el-form :model="projectForm" :rules="formRules" ref="formRef" label-width="80px">
+        <el-form-item label="项目名称" prop="name">
           <el-input v-model="projectForm.name" placeholder="请输入项目名称" />
         </el-form-item>
         <el-form-item label="项目图标">
@@ -79,16 +222,52 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveProject">确定</el-button>
+        <el-button type="primary" :loading="submitLoading" @click="saveProject">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 项目属性对话框 -->
+    <el-dialog
+      v-model="propertyDialogVisible"
+      title="项目属性"
+      width="500px"
+    >
+      <div v-if="propertyLoading" class="property-loading">
+        <el-skeleton :rows="6" animated />
+      </div>
+      <div v-else-if="projectProperty" class="project-property">
+        <div class="property-item">
+          <label class="property-label">项目图标：</label>
+          <span class="property-value">{{ projectProperty.icon }}</span>
+        </div>
+        <div class="property-item">
+          <label class="property-label">项目名称：</label>
+          <span class="property-value">{{ projectProperty.projectName }}</span>
+        </div>
+        <div class="property-item">
+          <label class="property-label">创建时间：</label>
+          <span class="property-value">{{ formatTime(projectProperty.creationTime) }}</span>
+        </div>
+        <div class="property-item">
+          <label class="property-label">更新时间：</label>
+          <span class="property-value">{{ formatTime(projectProperty.updateTime) }}</span>
+        </div>
+        <div class="property-item">
+          <label class="property-label">项目描述：</label>
+          <span class="property-value">{{ projectProperty.description || '暂无描述' }}</span>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="propertyDialogVisible = false">关闭</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Plus, MoreFilled, FolderOpened } from '@element-plus/icons-vue'
+import { Plus, MoreFilled, FolderOpened, Grid, List, ArrowUp, ArrowDown } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '../stores/user'
 import { useProjectsStore } from '../stores/projects'
@@ -99,61 +278,125 @@ const projectsStore = useProjectsStore()
 
 const dialogVisible = ref(false)
 const editingProject = ref(null)
+const submitLoading = ref(false)
+const formRef = ref()
+
+// 项目属性对话框
+const propertyDialogVisible = ref(false)
+const projectProperty = ref(null)
+const propertyLoading = ref(false)
+
+// 排序控制
+const sortField = ref('creation_time')
+const sortOrder = ref('asc')
+
+// 视图模式控制
+const viewMode = ref('card') // 'card' 或 'list'
+
+// 分页控制
+const currentPage = computed({
+  get: () => projectsStore.pagination.current,
+  set: (val) => val
+})
+const pageSize = computed({
+  get: () => projectsStore.pagination.pageSize,
+  set: (val) => val
+})
+
+// 表单数据
 const projectForm = ref({
   name: '',
   icon: '📁',
   description: ''
 })
 
-// 可选图标列表
-const iconList = [
-  '📁',
-  '📂',
-  '📚',
-  '📖',
-  '📝',
-  '✏️',
-  '📋',
-  '📄',
-  '💼',
-  '🎯',
-  '🚀',
-  '💡',
-  '🔧',
-  '⚙️',
-  '🎨',
-  '🎬',
-  '🎵',
-  '🎮',
-  '📷',
-  '🌟',
-  '❤️',
-  '🔥',
-  '✨',
-  '🌈',
-  '🏠',
-  '🌍',
-  '🎁',
-  '📦',
-  '🔒',
-  '🔑',
-  '💰',
-  '📊'
-]
+// 表单验证规则
+const formRules = {
+  name: [
+    { required: true, message: '请输入项目名称', trigger: 'blur' },
+    { min: 1, max: 50, message: '项目名称长度在 1 到 50 个字符', trigger: 'blur' }
+  ]
+}
 
-const showCreateDialog = () => {
+// 图标列表
+const iconList = ['📁', '📚', '💼', '🎯', '🚀', '⭐', '🔥', '💡', '🎨', '🔧', '📊', '🌟']
+
+// 日期格式化 - 只显示年月日
+function formatDate(timeStr) {
+  if (!timeStr) return ''
+  const date = new Date(timeStr)
+  return date.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).replace(/\//g, '-')
+}
+
+// 时间格式化 - 保留原函数以备其他地方使用
+function formatTime(timeStr) {
+  if (!timeStr) return ''
+  const date = new Date(timeStr)
+  return date.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+// 排序变化处理
+function handleSortChange() {
+  projectsStore.setSortConfig(sortField.value, sortOrder.value)
+}
+
+// 列表排序处理
+function handleListSort(field) {
+  if (sortField.value === field) {
+    // 如果点击的是当前排序字段，切换排序方向
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc'
+  } else {
+    // 如果点击的是新字段，设置为该字段并默认升序
+    sortField.value = field
+    sortOrder.value = 'asc'
+  }
+  handleSortChange()
+}
+
+// 分页大小变化
+function handleSizeChange(size) {
+  projectsStore.setPagination(1, size)
+}
+
+// 当前页变化
+function handleCurrentChange(page) {
+  projectsStore.setPagination(page)
+}
+
+// 显示创建对话框
+function showCreateDialog() {
   editingProject.value = null
-  projectForm.value = { name: '', icon: '📁', description: '' }
+  projectForm.value = {
+    name: '',
+    icon: '📁',
+    description: ''
+  }
   dialogVisible.value = true
 }
 
-const enterProject = (project) => {
+// 进入项目工作区
+function enterProject(project) {
+  // 设置当前项目ID
   projectsStore.setCurrentProject(project.id)
-  router.push(`/project/${project.id}`)
+  // 跳转到工作区页面，使用项目名称作为URL参数
+  router.push(`/project/${encodeURIComponent(project.name)}`)
 }
 
-const handleCommand = (command, project) => {
-  if (command === 'edit') {
+// 处理项目操作
+function handleCommand(command, project) {
+  if (command === 'view') {
+    showProjectProperty(project)
+  } else if (command === 'edit') {
     editingProject.value = project
     projectForm.value = {
       name: project.name,
@@ -162,178 +405,435 @@ const handleCommand = (command, project) => {
     }
     dialogVisible.value = true
   } else if (command === 'delete') {
-    ElMessageBox.confirm('确定要删除该项目吗？项目内的所有文件都将被删除。', '警告', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
+    ElMessageBox.confirm(
+      `确定要删除项目"${project.name}"吗？此操作不可恢复。`,
+      '确认删除',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    ).then(() => {
+      projectsStore.deleteProject(project.id)
     })
-      .then(() => {
-        projectsStore.deleteProject(project.id)
-        ElMessage.success('删除成功')
+  }
+}
+
+// 保存项目
+async function saveProject() {
+  if (!formRef.value) return
+  
+  try {
+    await formRef.value.validate()
+    submitLoading.value = true
+
+    if (editingProject.value) {
+      // 更新项目
+      await projectsStore.updateProject({
+        id: editingProject.value.id,
+        name: projectForm.value.name,
+        icon: projectForm.value.icon,
+        description: projectForm.value.description
       })
-      .catch(() => {})
+    } else {
+      // 创建项目
+      await projectsStore.createProject(projectForm.value)
+    }
+
+    dialogVisible.value = false
+  } catch (error) {
+    console.error('保存项目失败:', error)
+  } finally {
+    submitLoading.value = false
   }
 }
 
-const saveProject = () => {
-  if (!projectForm.value.name) {
-    ElMessage.warning('请输入项目名称')
-    return
+// 显示项目属性
+async function showProjectProperty(project) {
+  propertyLoading.value = true
+  propertyDialogVisible.value = true
+  
+  try {
+    const result = await projectsStore.getProjectDetail(project.id)
+    projectProperty.value = result
+  } catch (error) {
+    console.error('获取项目详情失败:', error)
+    ElMessage.error('获取项目详情失败')
+    propertyDialogVisible.value = false
+  } finally {
+    propertyLoading.value = false
   }
-
-  if (editingProject.value) {
-    projectsStore.updateProject(editingProject.value.id, {
-      ...projectForm.value,
-      updateTime: new Date().toLocaleString()
-    })
-    ElMessage.success('更新成功')
-  } else {
-    projectsStore.addProject({
-      id: Date.now(),
-      ...projectForm.value,
-      updateTime: new Date().toLocaleString(),
-      files: []
-    })
-    ElMessage.success('创建成功')
-  }
-  dialogVisible.value = false
 }
+
+// 页面加载时获取项目列表
+onMounted(() => {
+  projectsStore.fetchProjects()
+})
 </script>
 
 <style scoped>
 .projects-page {
   min-height: 100vh;
-  background: var(--color-background-mute);
+  background: var(--color-background);
 }
 
 .projects-header {
-  height: 60px;
-  background: var(--color-background);
-  border-bottom: 1px solid var(--color-border);
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
-}
-
-.header-left {
-  display: flex;
   align-items: center;
+  padding: 20px 40px;
+  background: var(--el-bg-color);
+  border-bottom: 1px solid var(--el-border-color);
 }
 
 .logo {
-  font-size: 20px;
-  font-weight: 600;
-  color: #409eff;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--el-color-primary);
 }
 
 .projects-main {
+  padding: 40px;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 32px 24px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
 }
 
 .section-title {
-  font-size: 24px;
-  font-weight: 600;
-  margin-bottom: 24px;
-  color: var(--color-text);
+  margin: 0;
+  color: var(--color-heading);
+}
+
+.section-controls {
+  display: flex;
+  align-items: center;
+}
+
+.loading-container {
+  padding: 20px;
 }
 
 .projects-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
+  margin-bottom: 30px;
 }
 
 .project-card {
-  background: var(--color-background);
+  background: var(--el-bg-color);
   border-radius: 12px;
   padding: 20px;
   cursor: pointer;
-  transition: all 0.2s;
-  border: 1px solid var(--color-border);
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
+  transition: all 0.3s ease;
+  border: 1px solid var(--el-border-color);
   position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  height: 160px; /* 增加高度到160px */
+  box-sizing: border-box;
 }
 
 .project-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px var(--el-box-shadow-light);
+  border-color: var(--el-color-primary);
+}
+
+.project-content {
+  display: flex;
+  align-items: flex-start;
+  flex: 1;
+  gap: 16px;
+  height: 100%;
+  overflow: hidden;
+  padding-right: 50px;
 }
 
 .project-icon {
-  font-size: 40px;
+  font-size: 36px;
   line-height: 1;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px; /* 微调对齐 */
 }
 
 .project-info {
   flex: 1;
   min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .project-name {
-  font-size: 16px;
-  font-weight: 600;
   margin: 0 0 8px 0;
-  color: var(--color-text);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-heading);
+  line-height: 1.3;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  padding-top: 2px; /* 微调与图标对齐 */
 }
 
 .project-desc {
-  font-size: 13px;
-  color: #909399;
-  margin: 0 0 8px 0;
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: break-word;
+  flex: 1;
+  margin-bottom: 12px;
+}
+
+.project-meta {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-top: auto;
 }
 
 .project-time {
   font-size: 12px;
-  color: #c0c4cc;
+  color: var(--el-text-color-placeholder);
+  background: var(--el-fill-color-light);
+  padding: 4px 8px;
+  border-radius: 4px;
 }
 
-.project-more {
+.project-actions {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  font-size: 18px;
-  color: #606266;
-  cursor: pointer;
-  opacity: 1;
-  z-index: 10;
+  top: 15px;
+  right: 15px;
+  flex-shrink: 0;
 }
 
-.project-card {
-  overflow: visible;
+.project-actions .el-button {
+  padding: 6px;
+  font-size: 16px;
+  border: none;
+  background: transparent;
+  color: var(--el-text-color-placeholder);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.6;
+  transition: all 0.3s ease;
+}
+
+.project-card:hover .project-actions .el-button {
+  opacity: 1;
+  background: var(--el-fill-color-light);
+  color: var(--el-color-primary);
+}
+
+/* 列表视图样式 - Windows资源管理器风格 */
+.projects-list {
+  background: var(--el-bg-color);
+  border: 1px solid var(--el-border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 30px;
+  box-shadow: var(--el-box-shadow-light);
+}
+
+.projects-list-header {
+  display: grid;
+  grid-template-columns: 40px 220px 130px 130px 50px;
+  align-items: center;
+  padding: 12px 20px;
+  background: var(--el-fill-color);
+  border-bottom: 1px solid var(--el-border-color);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--el-text-color-secondary);
+  overflow: hidden;
+}
+
+.header-icon,
+.header-name,
+.header-date,
+.header-update,
+.header-actions {
+  padding: 0 6px;
+}
+
+.header-name {
+  text-align: left;
+}
+
+.header-date {
+  text-align: left;
+}
+
+.header-update {
+  text-align: left;
+}
+
+.sortable-header {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  border-radius: 4px;
+  padding: 4px 6px !important;
+  margin: -4px 0;
+  position: relative;
+  z-index: 1;
+}
+
+.sortable-header:hover {
+  background: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
+}
+
+.sortable-header.active {
+  color: var(--el-color-primary);
+  font-weight: 700;
+  background: var(--el-color-primary-light-9);
+}
+
+.sort-icon {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.project-list-item {
+  display: grid;
+  grid-template-columns: 40px 220px 130px 130px 50px;
+  align-items: center;
+  padding: 12px 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+  min-height: 48px;
+}
+
+.project-list-item:last-child {
+  border-bottom: none;
+}
+
+.project-list-item:hover {
+  background: var(--el-fill-color-light);
+  border-left: 3px solid var(--el-color-primary);
+  padding-left: 17px;
+}
+
+.project-list-item:active {
+  background: var(--el-fill-color);
+}
+
+.list-icon {
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+}
+
+.list-name {
+  font-size: 14px;
+  color: var(--color-heading);
+  font-weight: 500;
+  padding: 0 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.list-date {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+  padding: 0 6px;
+  text-align: left;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.list-update {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+  padding: 0 6px;
+  text-align: left;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.list-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+}
+
+.list-actions .el-button {
+  padding: 6px;
+  font-size: 14px;
+  border: none;
+  background: transparent;
+  color: var(--el-text-color-placeholder);
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: all 0.2s ease;
+}
+
+.project-list-item:hover .list-actions .el-button {
+  opacity: 1;
+}
+
+.list-actions .el-button:hover {
+  background: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
+  transform: scale(1.1);
 }
 
 .empty-state {
   grid-column: 1 / -1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px;
-  color: #999;
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--el-text-color-placeholder);
 }
 
-.empty-state p {
-  margin-top: 16px;
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
 }
 
 .icon-selector {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
   gap: 8px;
+  max-width: 240px;
 }
 
 .icon-option {
@@ -342,71 +842,92 @@ const saveProject = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  border-radius: 8px;
+  border: 1px solid var(--el-border-color);
+  border-radius: 4px;
   cursor: pointer;
-  border: 2px solid transparent;
-  transition: all 0.2s;
+  font-size: 18px;
+  transition: all 0.3s;
 }
 
 .icon-option:hover {
-  background: var(--color-background-mute);
+  border-color: var(--el-color-primary);
 }
 
 .icon-option.active {
-  border-color: #409eff;
-  background: #ecf5ff;
+  border-color: var(--el-color-primary);
+  background-color: var(--el-color-primary-light-9);
 }
 
-/* Dark Reader 风格深色模式 */
+.property-loading {
+  padding: 20px;
+}
+
+.project-property {
+  padding: 10px 0;
+}
+
+.property-item {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+
+.property-label {
+  font-weight: 600;
+  color: var(--el-text-color-secondary);
+  width: 100px;
+  flex-shrink: 0;
+  text-align: right;
+  margin-right: 16px;
+}
+
+.property-value {
+  color: var(--color-text);
+  flex: 1;
+  word-break: break-word;
+}
+
+@media (max-width: 768px) {
+  .projects-header {
+    padding: 15px 20px;
+  }
+  
+  .projects-main {
+    padding: 20px;
+  }
+  
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .projects-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 深色模式特殊处理 */
 @media (prefers-color-scheme: dark) {
   .project-card:hover {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
   }
-
-  .project-desc {
-    color: var(--dr-text-secondary, #b8b5b2);
+  
+  .projects-list {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   }
-
-  .project-time {
-    color: var(--dr-text-muted, #8a8785);
-  }
-
-  .project-more {
-    color: var(--dr-text-muted, #8a8785);
-  }
-
-  .empty-state {
-    color: var(--dr-text-muted, #8a8785);
-  }
-
-  .icon-option:hover {
-    background: var(--dr-bg-hover, #303234);
-  }
-
-  .icon-option.active {
-    border-color: var(--dr-accent, #5c9aff);
+  
+  .sortable-header:hover {
     background: rgba(92, 154, 255, 0.15);
   }
-
-  /* 退出登录按钮深色模式优化 */
-  .header-right .el-button--danger.is-link {
-    color: var(--dr-danger, #d96459) !important;
-    background-color: transparent !important;
-    border: none !important;
-    opacity: 0.85;
-    transition: all 0.3s ease;
+  
+  .sortable-header.active {
+    background: rgba(92, 154, 255, 0.12);
   }
-
-  .header-right .el-button--danger.is-link:hover {
-    color: var(--dr-danger-hover, #e57469) !important;
-    opacity: 1 !important;
-    background-color: rgba(217, 100, 89, 0.1) !important;
-  }
-
-  .header-right .el-button--danger.is-link:focus {
-    color: var(--dr-danger-hover, #e57469) !important;
-    background-color: rgba(217, 100, 89, 0.15) !important;
+  
+  .list-actions .el-button:hover {
+    background: rgba(92, 154, 255, 0.15);
   }
 }
 </style>
