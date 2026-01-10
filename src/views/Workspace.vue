@@ -16,7 +16,7 @@
     >
       <div class="sidebar-header">
         <el-button :icon="Back" link @click="goBack">返回</el-button>
-        <span class="project-name">{{ decodeURIComponent(route.params.projectName || '') }}</span>
+        <span class="project-name">{{ currentProjectName || currentProject?.name || '加载中...' }}</span>
         <el-dropdown trigger="click" @command="handleCreate">
           <el-button :icon="Plus" circle size="small" />
           <template #dropdown>
@@ -119,7 +119,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { Plus, Document, Folder, Setting, Search, Back, FolderOpened } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -127,6 +127,7 @@ import { useFilesStore } from '../stores/files'
 import { useProjectsStore } from '../stores/projects'
 import EditorPanel from '../components/EditorPanel.vue'
 import OutlineTree from '../components/OutlineTree.vue'
+import { getNodeTree, createNode, updateNode, deleteNode } from '../api/nodeService'
 
 const route = useRoute()
 const router = useRouter()
@@ -184,25 +185,96 @@ onBeforeUnmount(() => {
 
 const currentProject = computed(() => projectsStore.currentProject())
 
-// 监听路由变化，处理项目切换
-watch(() => route.params.projectName, async (newProjectName) => {
-  if (newProjectName) {
-    console.log('项目名称:', newProjectName)
-    
-    // 重置当前选中的文件
-    currentFileId.value = null
-    
-    // 暂时先不验证项目，直接显示页面
-    // 后续可以根据需要添加项目验证逻辑
-  }
-}, { immediate: true })
-
 // 当前选中的文件ID
 const currentFileId = ref(null)
 const currentFile = computed(() => filesStore.getFile(currentFileId.value))
 
-// 文件树数据（暂时为空，显示空状态）
-const fileTree = computed(() => [])
+// 文件树数据
+const fileTree = ref([])
+const loading = ref(false)
+
+// 当前项目名称（从节点树API获取）
+const currentProjectName = ref('')
+
+// 当前项目ID（从store获取）
+const currentProjectId = computed(() => projectsStore.currentProjectId)
+
+// 转换后端节点树格式为前端文件树格式
+const convertNodeTreeToFileTree = (nodeTreeResponse) => {
+  if (!nodeTreeResponse || !nodeTreeResponse.rootNodes) return []
+  
+  const convertNodeItem = (nodeItem) => ({
+    id: nodeItem.nodeId,
+    name: nodeItem.nodeName,
+    type: nodeItem.nodeType === 0 ? 'folder' : 'file',
+    updateTime: nodeItem.updateTime,
+    creationTime: nodeItem.creationTime,
+    children: nodeItem.children?.map(convertNodeItem) || []
+  })
+  
+  return nodeTreeResponse.rootNodes.map(convertNodeItem)
+}
+
+// 加载项目节点树
+const loadNodeTree = async () => {
+  console.log('开始加载节点树，当前项目ID:', currentProjectId.value)
+  
+  if (!currentProjectId.value) {
+    console.warn('项目ID为空，无法加载节点树')
+    return
+  }
+  
+  try {
+    loading.value = true
+    console.log('调用 getNodeTree API，项目ID:', currentProjectId.value)
+    const treeResponse = await getNodeTree(currentProjectId.value)
+    console.log('获取到的节点树响应:', treeResponse)
+    
+    // 提取项目名称
+    if (treeResponse.projectName) {
+      currentProjectName.value = treeResponse.projectName
+      console.log('设置项目名称:', treeResponse.projectName)
+    }
+    
+    // 转换数据格式以适配前端组件
+    fileTree.value = convertNodeTreeToFileTree(treeResponse)
+    console.log('转换后的文件树:', fileTree.value)
+    
+    // 显示统计信息
+    if (treeResponse.totalNodes > 0) {
+      console.log(`项目统计: 总节点${treeResponse.totalNodes}个, 文件${treeResponse.fileCount}个, 文件夹${treeResponse.folderCount}个`)
+    } else {
+      console.log('项目为空，没有节点')
+    }
+  } catch (error) {
+    console.error('加载节点树失败:', error)
+    ElMessage.error('加载文件树失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 监听路由变化，处理项目切换
+watch(() => route.params.projectId, async (newProjectId) => {
+  if (newProjectId) {
+    console.log('路由项目ID:', newProjectId)
+    
+    // 重置当前选中的文件和项目名称
+    currentFileId.value = null
+    currentProjectName.value = ''
+    
+    // 设置当前项目ID
+    const projectId = parseInt(newProjectId)
+    projectsStore.setCurrentProject(projectId)
+    console.log('设置当前项目ID:', projectId)
+    
+    // 等待下一个tick确保状态更新
+    await nextTick()
+    
+    // 加载项目节点树
+    await loadNodeTree()
+  }
+}, { immediate: true })
 
 // 大纲数据
 const outline = ref([])
@@ -283,7 +355,12 @@ const selectFile = (file) => {
 }
 
 // 新建文件
-const handleCreate = (command) => {
+const handleCreate = async (command) => {
+  if (!currentProjectId.value) {
+    ElMessage.error('项目ID不存在，无法创建文件')
+    return
+  }
+
   if (command === 'file') {
     ElMessageBox.prompt('请输入文件名', '新建文件', {
       confirmButtonText: '确定',
@@ -291,18 +368,26 @@ const handleCreate = (command) => {
       inputPattern: /\S+/,
       inputErrorMessage: '文件名不能为空'
     })
-      .then(({ value }) => {
-        const fileName = value.endsWith('.md') ? value : `${value}.md`
-        const newFile = {
-          id: Date.now(),
-          name: fileName,
-          type: 'file',
-          updateTime: new Date().toLocaleString()
-          // content: `# ${value}\n\n开始写作...`
+      .then(async ({ value }) => {
+        try {
+          const fileName = value.endsWith('.md') ? value : `${value}.md`
+          const nodeData = {
+            projectId: currentProjectId.value,
+            parentId: null, // 暂时创建在根目录
+            nodeType: 1, // 文件
+            nodeName: fileName
+          }
+          
+          const treeResponse = await createNode(nodeData)
+          console.log('创建文件成功，返回树形数据:', treeResponse)
+          
+          // 更新文件树
+          fileTree.value = convertNodeTreeToFileTree(treeResponse)
+          ElMessage.success('文件创建成功')
+        } catch (error) {
+          console.error('创建文件失败:', error)
+          ElMessage.error('创建文件失败')
         }
-        filesStore.addFile(newFile)
-        currentFileId.value = newFile.id
-        ElMessage.success('文件创建成功')
       })
       .catch(() => {})
   } else if (command === 'folder') {
@@ -312,40 +397,60 @@ const handleCreate = (command) => {
       inputPattern: /\S+/,
       inputErrorMessage: '文件夹名称不能为空'
     })
-      .then(({ value }) => {
-        filesStore.addFile({
-          id: Date.now(),
-          name: value,
-          type: 'folder',
-          updateTime: new Date().toLocaleString(),
-          children: []
-        })
-        ElMessage.success('文件夹创建成功')
+      .then(async ({ value }) => {
+        try {
+          const nodeData = {
+            projectId: currentProjectId.value,
+            parentId: null, // 暂时创建在根目录
+            nodeType: 0, // 文件夹
+            nodeName: value
+          }
+          
+          const treeResponse = await createNode(nodeData)
+          console.log('创建文件夹成功，返回树形数据:', treeResponse)
+          
+          // 更新文件树
+          fileTree.value = convertNodeTreeToFileTree(treeResponse)
+          ElMessage.success('文件夹创建成功')
+        } catch (error) {
+          console.error('创建文件夹失败:', error)
+          ElMessage.error('创建文件夹失败')
+        }
       })
       .catch(() => {})
   }
 }
 
 // 删除文件
-const handleDelete = (file) => {
+const handleDelete = async (file) => {
   const msg = file.type === 'folder' ? '确定要删除该文件夹及其所有内容吗?' : '确定要删除该文件吗?'
   ElMessageBox.confirm(msg, '警告', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
   })
-    .then(() => {
-      if (currentFileId.value === file.id) {
-        currentFileId.value = null
+    .then(async () => {
+      try {
+        if (currentFileId.value === file.id) {
+          currentFileId.value = null
+        }
+        
+        const treeResponse = await deleteNode(file.id)
+        console.log('删除成功，返回树形数据:', treeResponse)
+        
+        // 更新文件树
+        fileTree.value = convertNodeTreeToFileTree(treeResponse)
+        ElMessage.success('删除成功')
+      } catch (error) {
+        console.error('删除失败:', error)
+        ElMessage.error('删除失败')
       }
-      filesStore.deleteFile(file.id)
-      ElMessage.success('删除成功')
     })
     .catch(() => {})
 }
 
 // 重命名
-const handleRename = (file) => {
+const handleRename = async (file) => {
   const title = '重命名'
   const placeholder = file.type === 'folder' ? '新的文件夹名称' : '新的文件名'
   ElMessageBox.prompt('', title, {
@@ -356,19 +461,28 @@ const handleRename = (file) => {
     inputPattern: /\S+/,
     inputErrorMessage: '名称不能为空'
   })
-    .then(({ value }) => {
-      let newName = value.trim()
-      if (file.type === 'file') {
-        newName = `${newName.replace(/\.md$/i, '')}.md`
+    .then(async ({ value }) => {
+      try {
+        let newName = value.trim()
+        if (file.type === 'file') {
+          newName = `${newName.replace(/\.md$/i, '')}.md`
+        }
+        
+        const nodeData = {
+          nodeId: file.id,
+          nodeName: newName
+        }
+        
+        const treeResponse = await updateNode(nodeData)
+        console.log('重命名成功，返回树形数据:', treeResponse)
+        
+        // 更新文件树
+        fileTree.value = convertNodeTreeToFileTree(treeResponse)
+        ElMessage.success('重命名成功')
+      } catch (error) {
+        console.error('重命名失败:', error)
+        ElMessage.error('重命名失败')
       }
-      filesStore.updateFile(file.id, {
-        name: newName,
-        updateTime: new Date().toLocaleString()
-      })
-      if (currentFileId.value === file.id) {
-        currentFileId.value = file.id
-      }
-      ElMessage.success('重命名成功')
     })
     .catch(() => {})
 }
@@ -518,17 +632,29 @@ const scrollToHeading = (heading) => {
 }
 
 .tree-node:hover {
+  background: var(--el-color-primary-light-9);
+}
+
+.tree-node:hover:not(.active) {
   background: var(--color-background-mute);
 }
 
 .tree-node.active {
   background: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
+  border-left: 3px solid var(--el-color-primary);
 }
 
 /* Dark Reader 风格深色模式 */
 @media (prefers-color-scheme: dark) {
   .tree-node.active {
-    background: rgba(92, 154, 255, 0.15);
+    background: rgba(64, 158, 255, 0.12);
+    color: var(--el-color-primary-light-3);
+    border-left: 3px solid var(--el-color-primary);
+  }
+
+  .tree-node:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.05);
   }
 
   .node-icon {

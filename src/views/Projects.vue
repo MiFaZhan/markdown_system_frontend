@@ -386,10 +386,17 @@ function showCreateDialog() {
 
 // 进入项目工作区
 function enterProject(project) {
+  console.log('点击项目:', project)
+  
   // 设置当前项目ID
   projectsStore.setCurrentProject(project.id)
-  // 跳转到工作区页面，使用项目名称作为URL参数
-  router.push(`/project/${encodeURIComponent(project.name)}`)
+  console.log('设置当前项目ID:', project.id)
+  
+  // 跳转到工作区页面，使用项目ID作为URL参数
+  const targetPath = `/project/${project.id}`
+  console.log('准备跳转到:', targetPath)
+  
+  router.push(targetPath)
 }
 
 // 处理项目操作
@@ -466,8 +473,10 @@ async function showProjectProperty(project) {
 }
 
 // 页面加载时获取项目列表
-onMounted(() => {
-  projectsStore.fetchProjects()
+onMounted(async () => {
+  console.log('Projects页面加载，开始获取项目列表')
+  await projectsStore.fetchProjects()
+  console.log('项目列表获取完成:', projectsStore.projectList)
 })
 </script>
 
