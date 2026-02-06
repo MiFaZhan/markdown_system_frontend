@@ -217,6 +217,7 @@ const convertNodeTreeToFileTree = (nodeTreeResponse) => {
   
   const convertNodeItem = (nodeItem) => ({
     id: nodeItem.nodeId,
+    parentId: nodeItem.parentId,
     name: nodeItem.nodeName,
     type: nodeItem.nodeType === 0 ? 'folder' : 'file',
     updateTime: nodeItem.updateTime,
@@ -369,7 +370,7 @@ const selectFile = (file) => {
   }
 }
 
-// 拖拽放置限制：只能放置到文件夹中
+// 拖拽放置限制
 const allowDrop = (draggingNode, dropNode, type) => {
   // 不能拖拽到自己
   if (draggingNode.data.id === dropNode.data.id) {
@@ -394,14 +395,13 @@ const allowDrop = (draggingNode, dropNode, type) => {
     return false
   }
   
-  // 只有 type 为 'inner' 时才允许放置到节点内部
-  // 且目标节点必须是文件夹
+  // type 为 'inner' 时，目标必须是文件夹
   if (type === 'inner') {
     return dropNode.data.type === 'folder'
   }
   
-  // before/after 类型不允许（简化逻辑，只支持拖拽到文件夹内部）
-  return false
+  // before/after 类型允许（可以拖到同级位置）
+  return true
 }
 
 // 拖拽限制：所有节点都可以被拖拽
@@ -417,22 +417,30 @@ const handleDrop = async (draggingNode, dropNode, dropType) => {
     dropType
   })
   
-  // 只有拖拽到文件夹内部时才处理
-  if (dropType !== 'inner') {
-    console.warn('不支持的拖拽类型:', dropType)
-    return
-  }
+  let parentId
   
-  // 目标必须是文件夹
-  if (dropNode.data.type !== 'folder') {
-    ElMessage.warning('只能拖拽到文件夹中')
+  if (dropType === 'inner') {
+    // 拖到文件夹内部，目标必须是文件夹
+    if (dropNode.data.type !== 'folder') {
+      ElMessage.warning('只能拖到文件夹中')
+      return
+    }
+    parentId = dropNode.data.id
+  } else if (dropType === 'before' || dropType === 'after') {
+    // 拖到同级位置，使用目标节点的 parentId
+    parentId = dropNode.data.parentId
+    if (parentId === null) {
+      parentId = 0 // 根目录使用 0
+    }
+  } else {
+    console.warn('不支持的拖拽类型:', dropType)
     return
   }
   
   try {
     const nodeData = {
       nodeId: draggingNode.data.id,
-      parentId: dropNode.data.id,
+      parentId: parentId,
       nodeName: draggingNode.data.name
     }
     
@@ -468,7 +476,7 @@ const handleCreate = async (command) => {
           const fileName = value.endsWith('.md') ? value : `${value}.md`
           const nodeData = {
             projectId: currentProjectId.value,
-            parentId: null, // 暂时创建在根目录
+            parentId: 0, // 0表示根目录
             nodeType: 1, // 文件
             nodeName: fileName
           }
@@ -495,7 +503,7 @@ const handleCreate = async (command) => {
         try {
           const nodeData = {
             projectId: currentProjectId.value,
-            parentId: null, // 暂时创建在根目录
+            parentId: 0, // 0表示根目录
             nodeType: 0, // 文件夹
             nodeName: value
           }
