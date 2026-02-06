@@ -45,15 +45,22 @@
         </div>
         <el-tree
           v-else
+          ref="treeRef"
           :data="fileTree"
           node-key="id"
           default-expand-all
           :props="{ label: 'name', children: 'children' }"
           highlight-current
+          :current-node-key="currentSelectedNodeId"
+          draggable
+          :allow-drop="allowDrop"
+          :allow-drag="allowDrag"
+          :expand-on-click-node="false"
           @node-click="selectFile"
+          @node-drop="handleDrop"
         >
           <template #default="{ node, data }">
-            <div class="tree-node" :class="{ active: currentFileId === data.id }">
+            <div class="tree-node" :class="{ active: currentSelectedNodeId === data.id }">
               <el-icon class="node-icon">
                 <Folder v-if="data.type === 'folder'" />
                 <Document v-else />
@@ -185,9 +192,14 @@ onBeforeUnmount(() => {
 
 const currentProject = computed(() => projectsStore.currentProject())
 
+const treeRef = ref(null)
+
 // 当前选中的文件ID
 const currentFileId = ref(null)
 const currentFile = computed(() => filesStore.getFile(currentFileId.value))
+
+// 当前选中的节点ID（可以是文件或文件夹）
+const currentSelectedNodeId = ref(null)
 
 // 文件树数据
 const fileTree = ref([])
@@ -259,8 +271,9 @@ watch(() => route.params.projectId, async (newProjectId) => {
   if (newProjectId) {
     console.log('路由项目ID:', newProjectId)
     
-    // 重置当前选中的文件和项目名称
+    // 重置当前选中的文件、节点和项目名称
     currentFileId.value = null
+    currentSelectedNodeId.value = null
     currentProjectName.value = ''
     
     // 设置当前项目ID
@@ -346,11 +359,93 @@ const startResize = (panel, e) => {
 
 // 选择文件
 const selectFile = (file) => {
+  currentSelectedNodeId.value = file.id
+  
   if (file.type !== 'folder') {
     currentFileId.value = file.id
     if (isMobile.value) {
       showSidebar.value = false
     }
+  }
+}
+
+// 拖拽放置限制：只能放置到文件夹中
+const allowDrop = (draggingNode, dropNode, type) => {
+  // 不能拖拽到自己
+  if (draggingNode.data.id === dropNode.data.id) {
+    return false
+  }
+  
+  // 检查是否拖拽到自己的子节点中
+  const isDescendant = (parent, child) => {
+    if (!parent.childNodes) return false
+    for (const node of parent.childNodes) {
+      if (node.data.id === child.data.id) {
+        return true
+      }
+      if (isDescendant(node, child)) {
+        return true
+      }
+    }
+    return false
+  }
+  
+  if (isDescendant(draggingNode, dropNode)) {
+    return false
+  }
+  
+  // 只有 type 为 'inner' 时才允许放置到节点内部
+  // 且目标节点必须是文件夹
+  if (type === 'inner') {
+    return dropNode.data.type === 'folder'
+  }
+  
+  // before/after 类型不允许（简化逻辑，只支持拖拽到文件夹内部）
+  return false
+}
+
+// 拖拽限制：所有节点都可以被拖拽
+const allowDrag = (draggingNode) => {
+  return true
+}
+
+// 处理拖拽放置
+const handleDrop = async (draggingNode, dropNode, dropType) => {
+  console.log('拖拽完成:', {
+    draggingNodeId: draggingNode.data.id,
+    dropNodeId: dropNode.data.id,
+    dropType
+  })
+  
+  // 只有拖拽到文件夹内部时才处理
+  if (dropType !== 'inner') {
+    console.warn('不支持的拖拽类型:', dropType)
+    return
+  }
+  
+  // 目标必须是文件夹
+  if (dropNode.data.type !== 'folder') {
+    ElMessage.warning('只能拖拽到文件夹中')
+    return
+  }
+  
+  try {
+    const nodeData = {
+      nodeId: draggingNode.data.id,
+      parentId: dropNode.data.id,
+      nodeName: draggingNode.data.name
+    }
+    
+    await updateNode(nodeData)
+    console.log('更新节点位置成功')
+    
+    // 重新加载文件树
+    await loadNodeTree()
+    
+    ElMessage.success('移动成功')
+  } catch (error) {
+    console.error('移动节点失败:', error)
+    ElMessage.error('移动失败')
   }
 }
 
@@ -378,11 +473,10 @@ const handleCreate = async (command) => {
             nodeName: fileName
           }
           
-          const treeResponse = await createNode(nodeData)
-          console.log('创建文件成功，返回树形数据:', treeResponse)
+          await createNode(nodeData)
+          console.log('创建文件成功')
           
-          // 更新文件树
-          fileTree.value = convertNodeTreeToFileTree(treeResponse)
+          await loadNodeTree()
           ElMessage.success('文件创建成功')
         } catch (error) {
           console.error('创建文件失败:', error)
@@ -406,11 +500,10 @@ const handleCreate = async (command) => {
             nodeName: value
           }
           
-          const treeResponse = await createNode(nodeData)
-          console.log('创建文件夹成功，返回树形数据:', treeResponse)
+          await createNode(nodeData)
+          console.log('创建文件夹成功')
           
-          // 更新文件树
-          fileTree.value = convertNodeTreeToFileTree(treeResponse)
+          await loadNodeTree()
           ElMessage.success('文件夹创建成功')
         } catch (error) {
           console.error('创建文件夹失败:', error)
@@ -430,17 +523,19 @@ const handleDelete = async (file) => {
     type: 'warning'
   })
     .then(async () => {
-      try {
-        if (currentFileId.value === file.id) {
-          currentFileId.value = null
-        }
-        
-        const treeResponse = await deleteNode(file.id)
-        console.log('删除成功，返回树形数据:', treeResponse)
-        
-        // 更新文件树
-        fileTree.value = convertNodeTreeToFileTree(treeResponse)
-        ElMessage.success('删除成功')
+        try {
+          if (currentFileId.value === file.id) {
+            currentFileId.value = null
+          }
+          if (currentSelectedNodeId.value === file.id) {
+            currentSelectedNodeId.value = null
+          }
+          
+          await deleteNode(file.id)
+          console.log('删除成功')
+          
+          await loadNodeTree()
+          ElMessage.success('删除成功')
       } catch (error) {
         console.error('删除失败:', error)
         ElMessage.error('删除失败')
@@ -473,11 +568,10 @@ const handleRename = async (file) => {
           nodeName: newName
         }
         
-        const treeResponse = await updateNode(nodeData)
-        console.log('重命名成功，返回树形数据:', treeResponse)
+        await updateNode(nodeData)
+        console.log('重命名成功')
         
-        // 更新文件树
-        fileTree.value = convertNodeTreeToFileTree(treeResponse)
+        await loadNodeTree()
         ElMessage.success('重命名成功')
       } catch (error) {
         console.error('重命名失败:', error)
@@ -642,7 +736,6 @@ const scrollToHeading = (heading) => {
 .tree-node.active {
   background: var(--el-color-primary-light-9);
   color: var(--el-color-primary);
-  border-left: 3px solid var(--el-color-primary);
 }
 
 /* Dark Reader 风格深色模式 */
@@ -650,7 +743,6 @@ const scrollToHeading = (heading) => {
   .tree-node.active {
     background: rgba(64, 158, 255, 0.12);
     color: var(--el-color-primary-light-3);
-    border-left: 3px solid var(--el-color-primary);
   }
 
   .tree-node:hover:not(.active) {
