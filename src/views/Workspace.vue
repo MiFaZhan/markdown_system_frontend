@@ -97,11 +97,15 @@
     <main class="editor-area">
       <EditorPanel
         :file="currentFile"
+        :content="fileContent"
+        :version="fileVersion"
+        :is-loading="isLoadingContent"
         :show-outline="showOutline"
         :show-sidebar="showSidebar"
         @update-outline="updateOutline"
         @toggle-outline="toggleOutline"
         @toggle-sidebar="toggleSidebar"
+        @content-change="handleContentChange"
       />
     </main>
 
@@ -135,6 +139,8 @@ import { useProjectsStore } from '../stores/projects'
 import EditorPanel from '../components/EditorPanel.vue'
 import OutlineTree from '../components/OutlineTree.vue'
 import { getNodeTree, createNode, updateNode, deleteNode } from '../api/nodeService'
+import { getMarkdownContent } from '../api/contentService'
+// import { contentCache } from '../utils/contentCache'
 
 const route = useRoute()
 const router = useRouter()
@@ -196,7 +202,31 @@ const treeRef = ref(null)
 
 // 当前选中的文件ID
 const currentFileId = ref(null)
-const currentFile = computed(() => filesStore.getFile(currentFileId.value))
+
+// 从文件树中查找文件对象
+const findFileById = (fileList, id) => {
+  for (const file of fileList) {
+    if (file.id === id) return file
+    if (file.children) {
+      const found = findFileById(file.children, id)
+      if (found) return found
+    }
+  }
+  return null
+}
+
+const currentFile = computed(() => {
+  if (!currentFileId.value) return null
+  return findFileById(fileTree.value, currentFileId.value)
+})
+
+// 当前文件的内容和版本信息
+const fileContent = ref('')
+const fileVersion = ref(null)
+const fileUpdateTime = ref(null)
+
+// 加载状态
+const isLoadingContent = ref(false)
 
 // 当前选中的节点ID（可以是文件或文件夹）
 const currentSelectedNodeId = ref(null)
@@ -276,6 +306,11 @@ watch(() => route.params.projectId, async (newProjectId) => {
     currentFileId.value = null
     currentSelectedNodeId.value = null
     currentProjectName.value = ''
+    
+    // 重置文件内容
+    fileContent.value = ''
+    fileVersion.value = null
+    fileUpdateTime.value = null
     
     // 设置当前项目ID
     const projectId = parseInt(newProjectId)
@@ -364,9 +399,33 @@ const selectFile = (file) => {
   
   if (file.type !== 'folder') {
     currentFileId.value = file.id
+    loadFileContent(file.id)
     if (isMobile.value) {
       showSidebar.value = false
     }
+  }
+}
+
+// 加载文件内容
+const loadFileContent = async (nodeId) => {
+  if (!nodeId) return
+  
+  isLoadingContent.value = true
+  
+  try {
+    // 直接调用 API，暂时不使用缓存
+    const contentData = await getMarkdownContent(nodeId)
+    
+    fileContent.value = contentData.content || ''
+    fileVersion.value = contentData.version
+    fileUpdateTime.value = contentData.updateTime
+  } catch (error) {
+    console.error('加载文件内容失败:', error)
+    fileContent.value = ''
+    fileVersion.value = null
+    fileUpdateTime.value = null
+  } finally {
+    isLoadingContent.value = false
   }
 }
 
@@ -605,6 +664,13 @@ const scrollToHeading = (heading) => {
   if (isMobile.value) {
     showOutline.value = false
   }
+}
+
+// 处理内容保存
+const handleContentChange = async (content) => {
+  if (!currentFileId.value) return
+  
+  fileContent.value = content
 }
 </script>
 
