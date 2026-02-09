@@ -24,6 +24,7 @@
     "vue-router": "^4.2.4"
   },
   "devDependencies": {
+    "@iconify-json/si": "^1.2.17",
     "@vitejs/plugin-vue": "^4.2.3",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
@@ -31,6 +32,8 @@
     "eslint-plugin-vue": "^9.19.2",
     "prettier": "^3.2.5",
     "sass": "^1.66.1",
+    "unplugin-icons": "^23.0.1",
+    "unplugin-vue-components": "^31.0.0",
     "vite": "^4.4.5"
   }
 }

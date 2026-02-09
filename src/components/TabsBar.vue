@@ -10,20 +10,6 @@
         />
       </el-tooltip>
 
-      <el-tooltip
-        v-if="hasActiveTab"
-        :content="showOutline ? '隐藏大纲' : '显示大纲'"
-        placement="bottom"
-      >
-        <el-button
-          :icon="List"
-          link
-          class="toolbar-btn"
-          :type="showOutline ? 'primary' : ''"
-          @click="$emit('toggle-outline')"
-        />
-      </el-tooltip>
-
       <div class="toolbar-divider"></div>
     </div>
 
@@ -68,6 +54,31 @@
       </div>
     </div>
 
+    <div class="toolbar-divider"></div>
+
+    <div class="right-toolbar">
+      <el-tooltip
+        :content="showOutline ? '收起右侧边栏' : '展开右侧边栏'"
+        placement="bottom"
+      >
+        <el-button
+          link
+          class="toolbar-btn"
+          :type="showOutline ? 'primary' : ''"
+          @click="$emit('toggle-outline')"
+        >
+          <template #icon>
+            <span class="custom-icon">
+              <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+                <path d="M824.888889 170.666667H199.111111a56.888889 56.888889 0 0 0-56.888889 56.888889v568.888888a56.888889 56.888889 0 0 0 56.888889 56.888889h625.777778a56.888889 56.888889 0 0 0 56.888889-56.888889V227.555556a56.888889 56.888889 0 0 0-56.888889-56.888889z m0 597.333333a28.444444 28.444444 0 0 1-28.444445 28.444444H227.555556a28.444444 28.444444 0 0 1-28.444445-28.444444V256a28.444444 28.444444 0 0 1 28.444445-28.444444h568.888888a28.444444 28.444444 0 0 1 28.444445 28.444444z"></path>
+                <path d="M512 256m28.444444 0l227.555556 0q28.444444 0 28.444444 28.444444l0 455.111112q0 28.444444-28.444444 28.444444l-227.555556 0q-28.444444 0-28.444444-28.444444l0-455.111112q0-28.444444 28.444444-28.444444Z"></path>
+              </svg>
+            </span>
+          </template>
+        </el-button>
+      </el-tooltip>
+    </div>
+
     <teleport to="body">
       <div
         v-if="contextMenuVisible"
@@ -102,7 +113,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { Document, Fold, Expand, List, Close, Remove, FolderDelete } from '@element-plus/icons-vue'
+import { Document, Fold, Expand, Close, Remove, FolderDelete } from '@element-plus/icons-vue'
 
 const props = defineProps({
   tabs: {
@@ -128,8 +139,6 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['switch-tab', 'close-tab', 'close-others', 'close-all', 'toggle-sidebar', 'toggle-outline', 'reorder-tabs'])
-
-const hasActiveTab = computed(() => props.tabs.length > 0)
 
 const getDisplayName = (fileName) => {
   return fileName.replace(/\.md$/, '')
@@ -288,11 +297,33 @@ const handleDragEnd = (event) => {
   background: var(--color-background-mute);
 }
 
+.custom-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.custom-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
 .toolbar-divider {
   width: 1px;
   height: 20px;
   background: var(--color-border);
   margin: 0 4px;
+  flex-shrink: 0;
+}
+
+.right-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .tabs-container {

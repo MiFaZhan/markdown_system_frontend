@@ -5,7 +5,6 @@
         <span class="logo">My Notes</span>
       </div>
       <div class="header-right">
-        <el-button type="primary" :icon="Plus" @click="showCreateDialog">新建项目</el-button>
         <el-button type="danger" link @click="userStore.logout">退出登录</el-button>
       </div>
     </header>
@@ -13,8 +12,30 @@
     <main class="projects-main">
       <div class="section-header">
         <h2 class="section-title">我的项目</h2>
+        <el-button type="primary" :icon="Plus" @click="showCreateDialog" class="create-btn" />
         <div class="section-controls">
-          <el-button-group style="margin-right: 15px">
+            <el-select
+              v-model="sortField"
+              placeholder="排序字段"
+              style="width: 120px"
+              @change="handleSortChange"
+            >
+              <el-option label="创建时间" value="creation_time" />
+              <el-option label="更新时间" value="update_time" />
+              <el-option label="项目名称" value="project_name" />
+            </el-select>
+            <el-select
+              v-model="sortOrder"
+              placeholder="排序方向"
+              style="width: 100px"
+              @change="handleSortChange"
+            >
+              <el-option label="升序" value="asc" />
+              <el-option label="降序" value="desc" />
+            </el-select>
+        </div>
+        <div class="view-controls">
+          <el-button-group>
             <el-button
               :type="viewMode === 'card' ? 'primary' : ''"
               :icon="Grid"
@@ -32,25 +53,6 @@
               列表
             </el-button>
           </el-button-group>
-          <el-select
-            v-model="sortField"
-            placeholder="排序字段"
-            style="width: 120px; margin-right: 10px"
-            @change="handleSortChange"
-          >
-            <el-option label="创建时间" value="creation_time" />
-            <el-option label="更新时间" value="update_time" />
-            <el-option label="项目名称" value="project_name" />
-          </el-select>
-          <el-select
-            v-model="sortOrder"
-            placeholder="排序方向"
-            style="width: 100px"
-            @change="handleSortChange"
-          >
-            <el-option label="升序" value="asc" />
-            <el-option label="降序" value="desc" />
-          </el-select>
         </div>
       </div>
 
@@ -69,21 +71,11 @@
             class="project-card"
             @click="enterProject(project)"
           >
-            <div class="project-content">
-              <div class="project-icon">{{ project.icon }}</div>
-              <div class="project-info">
-                <h3 class="project-name">{{ project.name }}</h3>
-                <p v-if="project.description" class="project-desc">
-                  {{ project.description }}
-                </p>
-                <div class="project-meta">
-                  <span class="project-time">{{ formatDate(project.creationTime) }}</span>
-                </div>
-              </div>
-            </div>
             <div class="project-actions">
               <el-dropdown trigger="click" @command="handleCommand($event, project)">
-                <el-button type="text" :icon="MoreFilled" @click.stop />
+                <button class="more-btn">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"><path fill="currentColor" d="M176 416a112 112 0 1 1 0 224 112 112 0 0 1 0-224m336 0a112 112 0 1 1 0 224 112 112 0 0 1 0-224m336 0a112 112 0 1 1 0 224 112 112 0 0 1 0-224"></path></svg>
+                </button>
                 <template #dropdown>
                   <el-dropdown-menu>
                     <el-dropdown-item command="edit">编辑项目</el-dropdown-item>
@@ -92,6 +84,10 @@
                   </el-dropdown-menu>
                 </template>
               </el-dropdown>
+            </div>
+            <div class="project-content">
+              <div class="project-icon">{{ project.icon }}</div>
+              <h3 class="project-name">{{ project.name }}</h3>
             </div>
           </div>
         </div>
@@ -103,37 +99,35 @@
             <div class="header-icon"></div>
             <div
               class="header-name sortable-header"
-              :class="{ active: sortField === 'project_name' }"
               @click="handleListSort('project_name')"
             >
               名称
-              <el-icon v-if="sortField === 'project_name'" class="sort-icon">
+              <el-icon v-if="isUserSorted && sortField === 'project_name'" class="sort-icon">
                 <ArrowUp v-if="sortOrder === 'asc'" />
                 <ArrowDown v-else />
               </el-icon>
             </div>
             <div
               class="header-date sortable-header"
-              :class="{ active: sortField === 'creation_time' }"
               @click="handleListSort('creation_time')"
             >
               创建时间
-              <el-icon v-if="sortField === 'creation_time'" class="sort-icon">
+              <el-icon v-if="isUserSorted && sortField === 'creation_time'" class="sort-icon">
                 <ArrowUp v-if="sortOrder === 'asc'" />
                 <ArrowDown v-else />
               </el-icon>
             </div>
             <div
               class="header-update sortable-header"
-              :class="{ active: sortField === 'update_time' }"
               @click="handleListSort('update_time')"
             >
               更新时间
-              <el-icon v-if="sortField === 'update_time'" class="sort-icon">
+              <el-icon v-if="isUserSorted && sortField === 'update_time'" class="sort-icon">
                 <ArrowUp v-if="sortOrder === 'asc'" />
                 <ArrowDown v-else />
               </el-icon>
             </div>
+            <div class="header-desc">项目描述</div>
             <div class="header-actions"></div>
           </div>
 
@@ -148,6 +142,7 @@
             <div class="list-name">{{ project.name }}</div>
             <div class="list-date">{{ formatDate(project.creationTime) }}</div>
             <div class="list-update">{{ formatDate(project.updateTime) }}</div>
+            <div class="list-desc">{{ project.description || '' }}</div>
             <div class="list-actions">
               <el-dropdown trigger="click" @command="handleCommand($event, project)">
                 <el-button type="text" :icon="MoreFilled" @click.stop />
@@ -265,6 +260,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Plus,
+  FolderAdd,
   MoreFilled,
   FolderOpened,
   Grid,
@@ -293,6 +289,7 @@ const propertyLoading = ref(false)
 // 排序控制
 const sortField = ref('creation_time')
 const sortOrder = ref('asc')
+const isUserSorted = ref(false)
 
 // 视图模式控制
 const viewMode = ref('card') // 'card' 或 'list'
@@ -366,6 +363,7 @@ function handleListSort(field) {
     sortField.value = field
     sortOrder.value = 'asc'
   }
+  isUserSorted.value = true
   handleSortChange()
 }
 
@@ -511,8 +509,8 @@ onMounted(async () => {
 
 .section-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 16px;
   margin-bottom: 30px;
 }
 
@@ -524,6 +522,20 @@ onMounted(async () => {
 .section-controls {
   display: flex;
   align-items: center;
+  gap: 8px;
+}
+
+.create-btn {
+  padding: 5px 10px;
+  font-size: 12px;
+  border-radius: 6px;
+  height: 28px;
+}
+
+.view-controls {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
 }
 
 .loading-container {
@@ -532,133 +544,103 @@ onMounted(async () => {
 
 .projects-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
   margin-bottom: 30px;
+  padding: 16px;
+  background: var(--el-fill-color-lighter);
+  border-radius: 8px;
 }
 
 .project-card {
-  background: var(--el-bg-color);
-  border-radius: 12px;
-  padding: 20px;
+  background: transparent;
+  border-radius: 4px;
+  padding: 16px 12px 12px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  border: 1px solid var(--el-border-color);
+  transition: all 0.15s ease;
   position: relative;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  height: 160px; /* 增加高度到160px */
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-height: 140px;
   box-sizing: border-box;
+  border: 1px solid transparent;
 }
 
 .project-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 25px var(--el-box-shadow-light);
+  background: var(--el-fill-color);
   border-color: var(--el-color-primary);
+}
+
+.project-card:hover .more-btn {
+  opacity: 1;
 }
 
 .project-content {
   display: flex;
-  align-items: flex-start;
-  flex: 1;
-  gap: 16px;
-  height: 100%;
-  overflow: hidden;
-  padding-right: 50px;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
 }
 
 .project-icon {
-  font-size: 36px;
+  font-size: 64px;
   line-height: 1;
-  flex-shrink: 0;
-  width: 48px;
-  height: 48px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 2px; /* 微调对齐 */
-}
-
-.project-info {
-  flex: 1;
-  min-width: 0;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  width: 96px;
+  height: 96px;
 }
 
 .project-name {
-  margin: 0 0 8px 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--color-heading);
-  line-height: 1.3;
-  word-break: break-word;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  padding-top: 2px; /* 微调与图标对齐 */
-}
-
-.project-desc {
   margin: 0;
-  color: var(--color-text-secondary);
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--el-text-color-primary);
   line-height: 1.4;
+  word-break: break-word;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  word-break: break-word;
-  flex: 1;
-  margin-bottom: 12px;
-}
-
-.project-meta {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  margin-top: auto;
-}
-
-.project-time {
-  font-size: 12px;
-  color: var(--el-text-color-placeholder);
-  background: var(--el-fill-color-light);
-  padding: 4px 8px;
-  border-radius: 4px;
+  width: 100%;
+  max-width: 120px;
 }
 
 .project-actions {
   position: absolute;
-  top: 15px;
-  right: 15px;
+  top: 6px;
+  right: 6px;
   flex-shrink: 0;
 }
 
-.project-actions .el-button {
-  padding: 6px;
+.more-btn {
+  padding: 4px;
   font-size: 16px;
   border: none;
   background: transparent;
-  color: var(--el-text-color-placeholder);
-  border-radius: 50%;
-  width: 32px;
-  height: 32px;
+  color: var(--el-text-color-primary);
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.6;
-  transition: all 0.3s ease;
+  opacity: 0;
+  transition: all 0.15s ease;
+  cursor: pointer;
 }
 
-.project-card:hover .project-actions .el-button {
-  opacity: 1;
-  background: var(--el-fill-color-light);
-  color: var(--el-color-primary);
+.more-btn:hover {
+  background: var(--el-fill-color-dark);
+}
+
+.more-btn svg {
+  width: 14px;
+  height: 14px;
 }
 
 /* 列表视图样式 - Windows资源管理器风格 */
@@ -673,7 +655,7 @@ onMounted(async () => {
 
 .projects-list-header {
   display: grid;
-  grid-template-columns: 40px 220px 130px 130px 50px;
+  grid-template-columns: 40px 220px 130px 130px 300px 50px;
   align-items: center;
   padding: 12px 20px;
   background: var(--el-fill-color);
@@ -688,6 +670,7 @@ onMounted(async () => {
 .header-name,
 .header-date,
 .header-update,
+.header-desc,
 .header-actions {
   padding: 0 6px;
 }
@@ -723,12 +706,6 @@ onMounted(async () => {
   color: var(--el-color-primary);
 }
 
-.sortable-header.active {
-  color: var(--el-color-primary);
-  font-weight: 700;
-  background: var(--el-color-primary-light-9);
-}
-
 .sort-icon {
   font-size: 12px;
   opacity: 0.8;
@@ -736,7 +713,7 @@ onMounted(async () => {
 
 .project-list-item {
   display: grid;
-  grid-template-columns: 40px 220px 130px 130px 50px;
+  grid-template-columns: 40px 220px 130px 130px 300px 50px;
   align-items: center;
   padding: 12px 20px;
   cursor: pointer;
@@ -794,6 +771,17 @@ onMounted(async () => {
   font-family: 'Segoe UI', system-ui, sans-serif;
 }
 
+.list-desc {
+  font-size: 13px;
+  color: var(--el-text-color-secondary);
+  padding: 0 6px;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
 .list-actions {
   display: flex;
   align-items: center;
@@ -813,12 +801,8 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0;
+  opacity: 0.6;
   transition: all 0.2s ease;
-}
-
-.project-list-item:hover .list-actions .el-button {
-  opacity: 1;
 }
 
 .list-actions .el-button:hover {
@@ -931,10 +915,6 @@ onMounted(async () => {
 
   .sortable-header:hover {
     background: rgba(92, 154, 255, 0.15);
-  }
-
-  .sortable-header.active {
-    background: rgba(92, 154, 255, 0.12);
   }
 
   .list-actions .el-button:hover {

@@ -81,32 +81,32 @@ const handleClick = () => {
 }
 
 /* 不同级别标题的字体大小 */
-.outline-item[data-level="1"] {
+.outline-item[data-level='1'] {
   font-size: 16px;
   font-weight: 600;
 }
 
-.outline-item[data-level="2"] {
+.outline-item[data-level='2'] {
   font-size: 15px;
   font-weight: 500;
 }
 
-.outline-item[data-level="3"] {
+.outline-item[data-level='3'] {
   font-size: 14px;
   font-weight: 500;
 }
 
-.outline-item[data-level="4"] {
+.outline-item[data-level='4'] {
   font-size: 14px;
   font-weight: 400;
 }
 
-.outline-item[data-level="5"] {
+.outline-item[data-level='5'] {
   font-size: 13px;
   font-weight: 400;
 }
 
-.outline-item[data-level="6"] {
+.outline-item[data-level='6'] {
   font-size: 13px;
   font-weight: 400;
 }

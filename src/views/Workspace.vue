@@ -128,7 +128,7 @@
 
     <!-- 右侧大纲 -->
     <aside
-      v-if="currentFile && showOutline"
+      v-if="showOutline"
       class="outline-panel"
       :class="{ 'mobile-outline': isMobile }"
       :style="{ width: outlineWidth + 'px' }"
@@ -140,7 +140,17 @@
       ></div>
       <div class="outline-header">大纲</div>
       <div class="outline-content">
-        <OutlineTree :outline="outline" @click-heading="scrollToHeading" />
+        <template v-if="currentFile">
+          <OutlineTree :outline="outline" @click-heading="scrollToHeading" />
+        </template>
+        <template v-else>
+          <div class="empty-outline">
+            <el-icon :size="48" :color="'var(--el-text-color-placeholder)'">
+              <Document />
+            </el-icon>
+            <p>暂无</p>
+          </div>
+        </template>
       </div>
     </aside>
   </div>
@@ -629,10 +639,11 @@ const initVditorForTab = (tabIndex) => {
       mode: 'ir',
       placeholder: '开始写作...',
       theme: isDark ? 'dark' : 'classic',
+      cdn: '/vditor/',
       preview: {
         theme: {
           current: isDark ? 'dark' : 'light',
-          path: 'https://unpkg.com/vditor/dist/css/content-theme'
+          path: '/vditor/dist/css/content-theme'
         },
         hljs: {
           style: isDark ? 'native' : 'github'
@@ -1602,6 +1613,21 @@ const handleScrollToHeading = (e) => {
   flex: 1;
   overflow-y: auto;
   padding: 12px;
+}
+
+.empty-outline {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--el-text-color-placeholder);
+}
+
+.empty-outline p {
+  margin-top: 16px;
+  font-size: 14px;
 }
 </style>
 
