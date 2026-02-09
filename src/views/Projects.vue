@@ -14,20 +14,20 @@
       <div class="section-header">
         <h2 class="section-title">我的项目</h2>
         <div class="section-controls">
-          <el-button-group style="margin-right: 15px;">
-            <el-button 
-              :type="viewMode === 'card' ? 'primary' : ''" 
-              :icon="Grid" 
-              @click="viewMode = 'card'"
+          <el-button-group style="margin-right: 15px">
+            <el-button
+              :type="viewMode === 'card' ? 'primary' : ''"
+              :icon="Grid"
               size="small"
+              @click="viewMode = 'card'"
             >
               卡片
             </el-button>
-            <el-button 
-              :type="viewMode === 'list' ? 'primary' : ''" 
-              :icon="List" 
-              @click="viewMode = 'list'"
+            <el-button
+              :type="viewMode === 'list' ? 'primary' : ''"
+              :icon="List"
               size="small"
+              @click="viewMode = 'list'"
             >
               列表
             </el-button>
@@ -73,10 +73,7 @@
               <div class="project-icon">{{ project.icon }}</div>
               <div class="project-info">
                 <h3 class="project-name">{{ project.name }}</h3>
-                <p 
-                  v-if="project.description"
-                  class="project-desc"
-                >
+                <p v-if="project.description" class="project-desc">
                   {{ project.description }}
                 </p>
                 <div class="project-meta">
@@ -104,8 +101,8 @@
           <!-- 表头 -->
           <div class="projects-list-header">
             <div class="header-icon"></div>
-            <div 
-              class="header-name sortable-header" 
+            <div
+              class="header-name sortable-header"
               :class="{ active: sortField === 'project_name' }"
               @click="handleListSort('project_name')"
             >
@@ -115,8 +112,8 @@
                 <ArrowDown v-else />
               </el-icon>
             </div>
-            <div 
-              class="header-date sortable-header" 
+            <div
+              class="header-date sortable-header"
               :class="{ active: sortField === 'creation_time' }"
               @click="handleListSort('creation_time')"
             >
@@ -126,8 +123,8 @@
                 <ArrowDown v-else />
               </el-icon>
             </div>
-            <div 
-              class="header-update sortable-header" 
+            <div
+              class="header-update sortable-header"
               :class="{ active: sortField === 'update_time' }"
               @click="handleListSort('update_time')"
             >
@@ -139,7 +136,7 @@
             </div>
             <div class="header-actions"></div>
           </div>
-          
+
           <!-- 项目列表 -->
           <div
             v-for="project in projectsStore.projectList"
@@ -167,7 +164,10 @@
         </div>
 
         <!-- 空状态 -->
-        <div v-if="projectsStore.projectList.length === 0 && !projectsStore.loading" class="empty-state">
+        <div
+          v-if="projectsStore.projectList.length === 0 && !projectsStore.loading"
+          class="empty-state"
+        >
           <el-icon :size="64" :color="'var(--el-text-color-placeholder)'"><FolderOpened /></el-icon>
           <p>还没有项目，点击上方按钮创建</p>
         </div>
@@ -194,7 +194,7 @@
       :title="editingProject ? '编辑项目' : '新建项目'"
       width="400px"
     >
-      <el-form :model="projectForm" :rules="formRules" ref="formRef" label-width="80px">
+      <el-form ref="formRef" :model="projectForm" :rules="formRules" label-width="80px">
         <el-form-item label="项目名称" prop="name">
           <el-input v-model="projectForm.name" placeholder="请输入项目名称" />
         </el-form-item>
@@ -227,11 +227,7 @@
     </el-dialog>
 
     <!-- 项目属性对话框 -->
-    <el-dialog
-      v-model="propertyDialogVisible"
-      title="项目属性"
-      width="500px"
-    >
+    <el-dialog v-model="propertyDialogVisible" title="项目属性" width="500px">
       <div v-if="propertyLoading" class="property-loading">
         <el-skeleton :rows="6" animated />
       </div>
@@ -267,7 +263,15 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { Plus, MoreFilled, FolderOpened, Grid, List, ArrowUp, ArrowDown } from '@element-plus/icons-vue'
+import {
+  Plus,
+  MoreFilled,
+  FolderOpened,
+  Grid,
+  List,
+  ArrowUp,
+  ArrowDown
+} from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '../stores/user'
 import { useProjectsStore } from '../stores/projects'
@@ -325,11 +329,13 @@ const iconList = ['📁', '📚', '💼', '🎯', '🚀', '⭐', '🔥', '💡',
 function formatDate(timeStr) {
   if (!timeStr) return ''
   const date = new Date(timeStr)
-  return date.toLocaleDateString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit'
-  }).replace(/\//g, '-')
+  return date
+    .toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    })
+    .replace(/\//g, '-')
 }
 
 // 时间格式化 - 保留原函数以备其他地方使用
@@ -387,15 +393,15 @@ function showCreateDialog() {
 // 进入项目工作区
 function enterProject(project) {
   console.log('点击项目:', project)
-  
+
   // 设置当前项目ID
   projectsStore.setCurrentProject(project.id)
   console.log('设置当前项目ID:', project.id)
-  
+
   // 跳转到工作区页面，使用项目ID作为URL参数
   const targetPath = `/project/${project.id}`
   console.log('准备跳转到:', targetPath)
-  
+
   router.push(targetPath)
 }
 
@@ -412,15 +418,11 @@ function handleCommand(command, project) {
     }
     dialogVisible.value = true
   } else if (command === 'delete') {
-    ElMessageBox.confirm(
-      `确定要删除项目"${project.name}"吗？此操作不可恢复。`,
-      '确认删除',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    ).then(() => {
+    ElMessageBox.confirm(`确定要删除项目"${project.name}"吗？此操作不可恢复。`, '确认删除', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }).then(() => {
       projectsStore.deleteProject(project.id)
     })
   }
@@ -429,7 +431,7 @@ function handleCommand(command, project) {
 // 保存项目
 async function saveProject() {
   if (!formRef.value) return
-  
+
   try {
     await formRef.value.validate()
     submitLoading.value = true
@@ -459,7 +461,7 @@ async function saveProject() {
 async function showProjectProperty(project) {
   propertyLoading.value = true
   propertyDialogVisible.value = true
-  
+
   try {
     const result = await projectsStore.getProjectDetail(project.id)
     projectProperty.value = result
@@ -901,17 +903,17 @@ onMounted(async () => {
   .projects-header {
     padding: 15px 20px;
   }
-  
+
   .projects-main {
     padding: 20px;
   }
-  
+
   .section-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 15px;
   }
-  
+
   .projects-grid {
     grid-template-columns: 1fr;
   }
@@ -922,19 +924,19 @@ onMounted(async () => {
   .project-card:hover {
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
   }
-  
+
   .projects-list {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   }
-  
+
   .sortable-header:hover {
     background: rgba(92, 154, 255, 0.15);
   }
-  
+
   .sortable-header.active {
     background: rgba(92, 154, 255, 0.12);
   }
-  
+
   .list-actions .el-button:hover {
     background: rgba(92, 154, 255, 0.15);
   }

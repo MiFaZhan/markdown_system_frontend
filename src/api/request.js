@@ -19,7 +19,7 @@ async function request(url, options = {}) {
   try {
     const response = await fetch(fullUrl, config)
     console.log('API响应状态:', response.status, response.statusText)
-    
+
     const data = await response.json()
     console.log('API响应数据:', data)
 

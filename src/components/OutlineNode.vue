@@ -3,6 +3,7 @@
     <div
       class="outline-item"
       :class="{ 'has-children': node.children && node.children.length > 0 }"
+      :data-level="node.level"
       @click="handleClick"
     >
       <span
@@ -59,11 +60,12 @@ const handleClick = () => {
 .outline-item {
   display: flex;
   align-items: center;
-  padding: 6px 8px;
-  font-size: 13px;
+  padding: 8px 12px;
+  font-size: 14px;
+  line-height: 1.4;
   color: var(--color-text);
   cursor: pointer;
-  border-radius: 4px;
+  border-radius: 6px;
   transition:
     background-color 0.15s,
     color 0.15s;
@@ -75,7 +77,38 @@ const handleClick = () => {
 }
 
 .outline-item.has-children {
+  font-weight: 600;
+}
+
+/* 不同级别标题的字体大小 */
+.outline-item[data-level="1"] {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.outline-item[data-level="2"] {
+  font-size: 15px;
   font-weight: 500;
+}
+
+.outline-item[data-level="3"] {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.outline-item[data-level="4"] {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.outline-item[data-level="5"] {
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.outline-item[data-level="6"] {
+  font-size: 13px;
+  font-weight: 400;
 }
 
 .expand-icon {

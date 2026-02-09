@@ -58,7 +58,7 @@ const treeData = computed(() => {
 
 .outline-empty {
   color: var(--color-text-secondary);
-  font-size: 13px;
+  font-size: 14px;
   text-align: center;
   padding: 20px;
 }

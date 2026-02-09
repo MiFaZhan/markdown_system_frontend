@@ -56,12 +56,12 @@ class ContentCache {
 
     // 开始加载
     const promise = fetchFn()
-      .then(data => {
+      .then((data) => {
         this.set(nodeId, data)
         this.clearLoading(nodeId)
         return data
       })
-      .catch(error => {
+      .catch((error) => {
         this.clearLoading(nodeId)
         throw error
       })

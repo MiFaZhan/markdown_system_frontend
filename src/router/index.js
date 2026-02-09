@@ -27,13 +27,13 @@ const router = createRouter({
 // 路由守卫：未登录跳转到登录页
 router.beforeEach((to, from, next) => {
   const userStore = useUserStore()
-  
+
   // 检查登录状态
   if (to.meta.requiresAuth && !userStore.token) {
     next('/login')
     return
   }
-  
+
   next()
 })
 
