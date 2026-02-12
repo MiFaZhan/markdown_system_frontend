@@ -14,7 +14,22 @@ export function getProjectList(params = {}) {
     pageNum: 1,
     pageSize: 10,
     sortField: 'creation_time',
-    sortOrder: 'desc'
+    sortOrder: 'asc'
+  }
+  return get('/project', { ...defaultParams, ...params })
+}
+
+/**
+ * 查询所有项目列表
+ * @param {Object} params - 查询参数
+ * @param {string} params.sortField - 排序字段，默认creation_time
+ * @param {string} params.sortOrder - 排序方向，asc/desc，默认desc
+ */
+export function getAllProjects(params = {}) {
+  const defaultParams = {
+    keyword: '',
+    sortField: 'creation_time',
+    sortOrder: 'asc'
   }
   return get('/project', { ...defaultParams, ...params })
 }

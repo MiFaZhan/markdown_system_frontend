@@ -34,6 +34,16 @@
               <el-option label="降序" value="desc" />
             </el-select>
         </div>
+        <div class="search-input">
+          <el-input
+            v-model="searchKeyword"
+            placeholder="搜索项目名称"
+            :prefix-icon="Search"
+            clearable
+            @input="handleSearch"
+            style="width: 200px"
+          />
+        </div>
         <div class="view-controls">
           <el-button-group>
             <el-button
@@ -73,7 +83,7 @@
           >
             <div class="project-actions">
               <el-dropdown trigger="click" @command="handleCommand($event, project)">
-                <button class="more-btn">
+                <button class="more-btn" @click.stop>
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"><path fill="currentColor" d="M176 416a112 112 0 1 1 0 224 112 112 0 0 1 0-224m336 0a112 112 0 1 1 0 224 112 112 0 0 1 0-224m336 0a112 112 0 1 1 0 224 112 112 0 0 1 0-224"></path></svg>
                 </button>
                 <template #dropdown>
@@ -168,19 +178,19 @@
         </div>
       </div>
 
-      <!-- 分页组件 -->
-      <div v-if="projectsStore.pagination.total > 0" class="pagination-container">
-        <el-pagination
-          v-model:current-page="currentPage"
-          v-model:page-size="pageSize"
-          :page-sizes="[5, 10, 20, 50]"
-          :total="projectsStore.pagination.total"
-          layout="total, sizes, prev, pager, next, jumper"
-          background
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
+        <!-- 分页组件 -->
+        <!-- <div v-if="projectsStore.pagination.total > 0" class="pagination-container">
+          <el-pagination
+            v-model:current-page="currentPage"
+            v-model:page-size="pageSize"
+            :page-sizes="[5, 10, 20, 50]"
+            :total="projectsStore.pagination.total"
+            layout="total, sizes, prev, pager, next, jumper"
+            background
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+          />
+        </div> -->
     </main>
 
     <!-- 新建/编辑项目对话框 -->
@@ -266,7 +276,8 @@ import {
   Grid,
   List,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  Search
 } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '../stores/user'
@@ -281,6 +292,8 @@ const editingProject = ref(null)
 const submitLoading = ref(false)
 const formRef = ref()
 
+const searchKeyword = ref('')
+
 // 项目属性对话框
 const propertyDialogVisible = ref(false)
 const projectProperty = ref(null)
@@ -293,16 +306,6 @@ const isUserSorted = ref(false)
 
 // 视图模式控制
 const viewMode = ref('card') // 'card' 或 'list'
-
-// 分页控制
-const currentPage = computed({
-  get: () => projectsStore.pagination.current,
-  set: (val) => val
-})
-const pageSize = computed({
-  get: () => projectsStore.pagination.pageSize,
-  set: (val) => val
-})
 
 // 表单数据
 const projectForm = ref({
@@ -350,7 +353,12 @@ function formatTime(timeStr) {
 
 // 排序变化处理
 function handleSortChange() {
-  projectsStore.setSortConfig(sortField.value, sortOrder.value)
+  projectsStore.setSortConfig(sortField.value, sortOrder.value, searchKeyword.value)
+}
+
+// 搜索处理
+function handleSearch() {
+  projectsStore.fetchProjects({ keyword: searchKeyword.value })
 }
 
 // 列表排序处理
@@ -365,16 +373,6 @@ function handleListSort(field) {
   }
   isUserSorted.value = true
   handleSortChange()
-}
-
-// 分页大小变化
-function handleSizeChange(size) {
-  projectsStore.setPagination(1, size)
-}
-
-// 当前页变化
-function handleCurrentChange(page) {
-  projectsStore.setPagination(page)
 }
 
 // 显示创建对话框
@@ -525,6 +523,12 @@ onMounted(async () => {
   gap: 8px;
 }
 
+.search-input {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
 .create-btn {
   padding: 5px 10px;
   font-size: 12px;
@@ -535,7 +539,6 @@ onMounted(async () => {
 .view-controls {
   display: flex;
   align-items: center;
-  margin-left: auto;
 }
 
 .loading-container {
@@ -548,7 +551,6 @@ onMounted(async () => {
   gap: 10px;
   margin-bottom: 30px;
   padding: 16px;
-  background: var(--el-fill-color-lighter);
   border-radius: 8px;
 }
 
@@ -570,7 +572,6 @@ onMounted(async () => {
 
 .project-card:hover {
   background: var(--el-fill-color);
-  border-color: var(--el-color-primary);
 }
 
 .project-card:hover .more-btn {
@@ -629,13 +630,20 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0;
+  opacity: 1;
   transition: all 0.15s ease;
   cursor: pointer;
 }
 
+@media (hover: hover) and (pointer: fine) {
+  .more-btn {
+    opacity: 0.3;
+  }
+}
+
 .more-btn:hover {
   background: var(--el-fill-color-dark);
+  opacity: 1;
 }
 
 .more-btn svg {
@@ -883,6 +891,19 @@ onMounted(async () => {
   word-break: break-word;
 }
 
+/* 响应式布局：逐步隐藏列 */
+@media (max-width: 1024px) {
+  .projects-list-header,
+  .project-list-item {
+    grid-template-columns: 40px 1fr 130px 130px 50px;
+  }
+
+  .header-desc,
+  .list-desc {
+    display: none;
+  }
+}
+
 @media (max-width: 768px) {
   .projects-header {
     padding: 15px 20px;
@@ -893,13 +914,116 @@ onMounted(async () => {
   }
 
   .section-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 15px;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .section-title {
+    font-size: 20px;
+  }
+
+  /* 搜索框在移动端独占一行，放在最后 */
+  .search-input {
+    order: 10;
+    width: 100%;
+    margin-left: 0;
+    margin-top: 4px;
+  }
+
+  .search-input .el-input {
+    width: 100% !important;
+  }
+
+  /* 调整控件区域 */
+  .section-controls {
+    flex: 1;
+    justify-content: flex-end;
+    min-width: auto;
+  }
+
+  /* 隐藏部分排序控件以节省空间（可选，视情况而定，这里先保持显示但缩小间距） */
+  .section-controls .el-select {
+    width: 90px !important;
+  }
+
+  .view-controls {
+    margin-left: 0;
+  }
+
+  /* 移动端视图切换按钮：只保留图标 */
+  .view-controls .el-button span {
+    display: none;
+  }
+
+  .view-controls .el-button {
+    padding: 8px !important;
+  }
+
+  /* 超窄屏布局适配 (< 495px) */
+  @media (max-width: 495px) {
+    .section-header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      grid-template-areas:
+        "title create"
+        "controls view"
+        "search search";
+      gap: 12px;
+      align-items: center;
+    }
+
+    .section-title {
+      grid-area: title;
+    }
+
+    .create-btn {
+      grid-area: create;
+      justify-self: end;
+    }
+
+    .section-controls {
+      grid-area: controls;
+      justify-content: flex-start;
+      /* 此时不需要 flex: 1，因为 Grid 已经控制了位置 */
+      flex: initial;
+    }
+    
+    .section-controls .el-select {
+      /* 下拉框宽度自适应，避免溢出 */
+      width: 85px !important;
+    }
+
+    .view-controls {
+      grid-area: view;
+      justify-self: end;
+      margin-left: 0;
+    }
+
+    .search-input {
+      grid-area: search;
+      width: 100%;
+      margin-top: 0;
+      /* 重置之前 flex 下的 order */
+      order: unset;
+    }
   }
 
   .projects-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* 移动端列表视图：只保留核心列 */
+  .projects-list-header,
+  .project-list-item {
+    grid-template-columns: 40px 1fr 50px;
+  }
+
+  /* 隐藏时间列 */
+  .header-date, .list-date,
+  .header-update, .list-update {
+    display: none;
   }
 }
 
