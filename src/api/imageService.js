@@ -1,13 +1,14 @@
 const BASE_URL = 'http://localhost:8080/api'
 
-export function uploadImage(file, projectId) {
+export function uploadImage(file, projectId, nodeId) {
   return new Promise((resolve, reject) => {
     const formData = new FormData()
     formData.append('file[]', file)
     formData.append('projectId', projectId)
+    formData.append('nodeId', nodeId)
 
     const fullUrl = `${BASE_URL}/image/upload`
-    console.log('上传图片:', fullUrl, 'projectId:', projectId)
+    console.log('上传图片:', fullUrl, 'projectId:', projectId, 'nodeId:', nodeId)
 
     fetch(fullUrl, {
       method: 'POST',

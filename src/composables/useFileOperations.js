@@ -1,7 +1,7 @@
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { createNode, updateNode, deleteNode } from '../api/nodeService'
+import { createNode, updateNode, deleteNode, uploadMarkdownFile } from '../api/nodeService'
 
-export function useFileOperations({ onRefresh }) {
+export function useFileOperations({ onRefresh, onCloseTab }) {
   const handleCreate = async (command, currentProjectId) => {
     if (!currentProjectId) {
       ElMessage.error('项目ID不存在，无法创建文件')
@@ -17,7 +17,7 @@ export function useFileOperations({ onRefresh }) {
       })
         .then(async ({ value }) => {
           try {
-            const fileName = value.endsWith('.md') ? value : `${value}.md`
+            const fileName = value
             const nodeData = {
               projectId: currentProjectId,
               parentId: 0,
@@ -66,6 +66,52 @@ export function useFileOperations({ onRefresh }) {
     }
   }
 
+  const handleUploadMarkdown = async (currentProjectId) => {
+    if (!currentProjectId) {
+      ElMessage.error('项目ID不存在，无法上传文件')
+      return
+    }
+
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.md'
+    input.onchange = async (e) => {
+      const file = e.target.files[0]
+      if (!file) {
+        return
+      }
+
+      if (!file.name.toLowerCase().endsWith('.md')) {
+        ElMessage.error('仅支持上传.md格式的文件')
+        return
+      }
+
+      try {
+        const result = await uploadMarkdownFile(file, currentProjectId)
+
+        if (onRefresh) {
+          await onRefresh()
+        }
+        ElMessage.success('上传成功')
+      } catch (error) {
+        ElMessage.error(error.message || '上传失败')
+      }
+    }
+    input.click()
+  }
+
+  const collectFileIds = (node) => {
+    const ids = []
+    if (node.type === 'file') {
+      ids.push(node.id)
+    } else if (node.children) {
+      for (const child of node.children) {
+        ids.push(...collectFileIds(child))
+      }
+    }
+    return ids
+  }
+
   const handleDelete = async (file, currentFileId, currentSelectedNodeId) => {
     const msg = file.type === 'folder' ? '确定要删除该文件夹及其所有内容吗?' : '确定要删除该文件吗?'
     ElMessageBox.confirm(msg, '警告', {
@@ -83,6 +129,13 @@ export function useFileOperations({ onRefresh }) {
           }
 
           await deleteNode(file.id)
+
+          if (onCloseTab) {
+            const fileIds = collectFileIds(file)
+            for (const fileId of fileIds) {
+              await onCloseTab(fileId)
+            }
+          }
 
           if (onRefresh) {
             await onRefresh()
@@ -108,10 +161,7 @@ export function useFileOperations({ onRefresh }) {
     })
       .then(async ({ value }) => {
         try {
-          let newName = value.trim()
-          if (file.type === 'file') {
-            newName = `${newName.replace(/\.md$/i, '')}.md`
-          }
+          const newName = value.trim()
 
           const nodeData = {
             nodeId: file.id,
@@ -206,6 +256,7 @@ export function useFileOperations({ onRefresh }) {
     handleRename,
     allowDrop,
     allowDrag,
-    handleDrop
+    handleDrop,
+    handleUploadMarkdown
   }
 }

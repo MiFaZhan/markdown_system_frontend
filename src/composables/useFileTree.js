@@ -119,7 +119,7 @@ export function useFileTree(route) {
         currentSelectedNodeId.value = null
         currentProjectName.value = ''
 
-        const projectId = parseInt(newProjectId)
+        const projectId = parseInt(newProjectId.split('-')[0])
         projectsStore.setCurrentProject(projectId)
 
         await nextTick()

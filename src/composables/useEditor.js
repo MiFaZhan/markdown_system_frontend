@@ -91,14 +91,16 @@ export function useEditor({ onContentChange, onAfterInit, onOutlineUpdate }) {
           fieldName: 'file[]',
           extraData: () => {
             return {
-              projectId: tab.projectId || 1
+              projectId: tab.projectId || 1,
+              nodeId: tab.fileId || 1
             }
           },
           handler: async (files) => {
             try {
               const file = files[0]
               const projectId = tab.projectId || 1
-              const imageUrl = await uploadImage(file, projectId)
+              const nodeId = tab.fileId || 1
+              const imageUrl = await uploadImage(file, projectId, nodeId)
               const fullImageUrl = `http://localhost:8080${imageUrl}`
               tab.vditorInstance.insertValue(`![${file.name}](${fullImageUrl})`)
               ElMessage.success('图片上传成功')

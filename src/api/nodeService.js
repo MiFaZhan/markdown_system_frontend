@@ -1,6 +1,8 @@
 // 节点相关API
 import { get, post, put, del } from './request'
 
+const BASE_URL = 'http://localhost:8080/api'
+
 /**
  * 获取项目的节点树形结构
  * @param {number} projectId - 项目ID
@@ -45,4 +47,42 @@ export function updateNode(nodeData) {
  */
 export function deleteNode(nodeId) {
   return del(`/node/${nodeId}`)
+}
+
+/**
+ * 上传Markdown文件
+ * @param {File} file - 上传的文件
+ * @param {number} projectId - 项目ID
+ * @param {number} parentId - 父节点ID（可选）
+ */
+export function uploadMarkdownFile(file, projectId, parentId) {
+  return new Promise((resolve, reject) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('projectId', projectId)
+    if (parentId !== undefined && parentId !== null) {
+      formData.append('parentId', parentId)
+    }
+
+    const fullUrl = `${BASE_URL}/node/upload`
+    console.log('上传Markdown文件:', fullUrl, 'projectId:', projectId)
+
+    fetch(fullUrl, {
+      method: 'POST',
+      body: formData
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log('上传响应:', data)
+        if (data.code === 200) {
+          resolve(data.data)
+        } else {
+          reject(new Error(data.message || '上传失败'))
+        }
+      })
+      .catch((error) => {
+        console.error('上传失败:', error)
+        reject(error)
+      })
+  })
 }

@@ -56,6 +56,9 @@
       @export-markdown="handleExportMarkdown"
       @export-pdf="handleExportPdf"
       @export-html="handleExportHtml"
+      @copy-markdown="handleCopyMarkdown"
+      @copy-zhihu="handleCopyZhihu"
+      @copy-wechat="handleCopyWechat"
     />
   </div>
 </template>
@@ -72,6 +75,7 @@ import { useFileTree } from '../composables/useFileTree'
 import { useTabs } from '../composables/useTabs'
 import { useEditor } from '../composables/useEditor'
 import { useFileOperations } from '../composables/useFileOperations'
+import { useExportAndCopy } from '../composables/useExportAndCopy'
 // import { useContentSearch } from '../composables/useContentSearch'
 
 const route = useRoute()
@@ -99,17 +103,81 @@ const {
   findFileById
 } = useFileTree(route)
 
-const { handleCreate, handleDelete, handleRename, allowDrop, allowDrag, handleDrop } =
-  useFileOperations({
-    onRefresh: loadNodeTree
-  })
+let initVditor = null
+
+const handleTabSwitch = (result) => {
+  console.log('[Workspace] handleTabSwitch 收到结果:', result)
+  if (!result || !result.tab) {
+    console.log('[Workspace] result 或 result.tab 为空，返回')
+    return
+  }
+
+  if (result.needInit && initVditor) {
+    console.log('[Workspace] 需要初始化编辑器')
+    nextTick(() => {
+      const tab = result.tab
+      console.log('[Workspace] nextTick 内，准备初始化 Vditor，tab:', tab)
+      const vditorInstance = initVditor(tab, handleEditorInput)
+      console.log('[Workspace] initVditor 返回:', vditorInstance)
+      if (vditorInstance) {
+        tab.vditorInstance = vditorInstance
+      }
+    })
+  }
+
+  currentFileId.value = result.tab.fileId
+  console.log('[Workspace] currentFileId 设置为:', result.tab.fileId)
+  if (result.tab.content) {
+    parseOutline(result.tab.content)
+  }
+}
+
+const {
+  openTabs,
+  activeTabIndex,
+  openTab,
+  switchTab,
+  reorderTabs,
+  closeTab,
+  closeOthers,
+  closeAllTabs,
+  getTabByFileId
+} = useTabs({
+  onSwitch: handleTabSwitch,
+  onSave: null
+})
+
+const closeTabByFileId = async (fileId) => {
+  const tabIndex = openTabs.value.findIndex((tab) => tab.fileId === fileId)
+  if (tabIndex !== -1) {
+    const result = await closeTab(tabIndex)
+    if (result && result.newActiveIndex !== undefined) {
+      if (result.needSwitch && result.newActiveIndex >= 0) {
+        handleTabSwitch(switchTab(result.newActiveIndex))
+      }
+      if (result.newActiveIndex === -1) {
+        currentFileId.value = null
+      }
+    }
+  }
+}
+
+const {
+  handleCreate: handleCreateFile,
+  handleDelete,
+  handleRename,
+  allowDrop,
+  allowDrag,
+  handleDrop,
+  handleUploadMarkdown
+} = useFileOperations({ onRefresh: loadNodeTree, onCloseTab: closeTabByFileId })
 
 const currentFile = computed(() => {
   if (!currentFileId.value) return null
   return findFileById(fileTree.value, currentFileId.value)
 })
 
-const sidePanelMode = ref('none')
+const sidePanelMode = ref('outline')
 const outline = ref([])
 
 const currentTabContent = computed(() => {
@@ -204,53 +272,27 @@ const handleContentChange = (tab) => {
   parseOutline(tab.content)
 }
 
-const handleTabSwitch = (result) => {
-  console.log('[Workspace] handleTabSwitch 收到结果:', result)
-  if (!result || !result.tab) {
-    console.log('[Workspace] result 或 result.tab 为空，返回')
-    return
-  }
-
-  if (result.needInit) {
-    console.log('[Workspace] 需要初始化编辑器')
-    nextTick(() => {
-      const tab = result.tab
-      console.log('[Workspace] nextTick 内，准备初始化 Vditor，tab:', tab)
-      const vditorInstance = initVditor(tab, handleEditorInput)
-      console.log('[Workspace] initVditor 返回:', vditorInstance)
-      if (vditorInstance) {
-        tab.vditorInstance = vditorInstance
-      }
-    })
-  }
-
-  currentFileId.value = result.tab.fileId
-  console.log('[Workspace] currentFileId 设置为:', result.tab.fileId)
-  if (result.tab.content) {
-    parseOutline(result.tab.content)
-  }
-}
-
 const {
-  openTabs,
-  activeTabIndex,
-  openTab,
-  switchTab,
-  reorderTabs,
-  closeTab,
-  closeOthers,
-  closeAllTabs,
-  getTabByFileId
-} = useTabs({
-  onSwitch: handleTabSwitch,
-  onSave: null
-})
-
-const { initVditor, updateSaveStatus, loadFileContent, debouncedSave } = useEditor({
+  initVditor: initVditorFn,
+  updateSaveStatus,
+  loadFileContent,
+  debouncedSave
+} = useEditor({
   onContentChange: handleContentChange,
   onAfterInit: handleEditorInit,
   onOutlineUpdate: parseOutline
 })
+
+initVditor = initVditorFn
+
+const {
+  handleExportMarkdown,
+  handleExportPdf,
+  handleExportHtml,
+  handleCopyMarkdown,
+  handleCopyZhihu,
+  handleCopyWechat
+} = useExportAndCopy(getTabByFileId, currentFileId)
 
 // const { contentSearchKeyword, contentSearchResults, jumpToSearchResult } = useContentSearch({
 //   getCurrentFileId: () => currentFileId.value,
@@ -316,6 +358,14 @@ const handleCloseAllTabs = async () => {
 const handleNodeCommand = (cmd, data) => {
   if (cmd === 'rename') return handleRename(data)
   if (cmd === 'delete') return handleDelete(data, currentFileId, currentSelectedNodeId)
+}
+
+const handleCreate = (cmd, projectId) => {
+  if (cmd === 'upload') {
+    handleUploadMarkdown(projectId)
+  } else {
+    handleCreateFile(cmd, projectId)
+  }
 }
 
 const setSidePanelMode = (mode) => {
@@ -425,93 +475,6 @@ const startResize = (panel, e) => {
   document.body.style.userSelect = 'none'
   document.addEventListener('mousemove', onMouseMove)
   document.addEventListener('mouseup', onMouseUp)
-}
-
-const handleExportMarkdown = () => {
-  const currentTab = getTabByFileId(currentFileId.value)
-  if (!currentTab || !currentTab.vditorInstance) return
-
-  const content = currentTab.vditorInstance.getValue()
-  const fileName = currentTab.name || 'document'
-  const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `${fileName}.md`
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
-}
-
-const handleExportPdf = () => {
-  const currentTab = getTabByFileId(currentFileId.value)
-  if (!currentTab || !currentTab.vditorInstance) return
-
-  const previewElement = currentTab.vditorInstance.vditor.element.querySelector('.vditor-preview')
-  if (!previewElement) return
-
-  const originalDisplay = previewElement.style.display
-  const originalVisibility = previewElement.style.visibility
-
-  previewElement.style.display = 'block'
-  previewElement.style.visibility = 'visible'
-
-  window.print()
-
-  setTimeout(() => {
-    previewElement.style.display = originalDisplay
-    previewElement.style.visibility = originalVisibility
-  }, 100)
-}
-
-const handleExportHtml = () => {
-  const currentTab = getTabByFileId(currentFileId.value)
-  if (!currentTab || !currentTab.vditorInstance) return
-
-  const content = currentTab.vditorInstance.getHTML()
-  const fileName = currentTab.name || 'document'
-  
-  const fullHtml = `<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${fileName}</title>
-  <link rel="stylesheet" href="/vditor/dist/index.css">
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      line-height: 1.6;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 40px 20px;
-      color: #333;
-    }
-    @media (prefers-color-scheme: dark) {
-      body {
-        background-color: #1a1a1a;
-        color: #e0e0e0;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="vditor-reset">
-    ${content}
-  </div>
-</body>
-</html>`
-
-  const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `${fileName}.html`
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
 }
 
 onMounted(() => {

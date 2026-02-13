@@ -14,6 +14,7 @@
           <el-dropdown-menu>
             <el-dropdown-item command="file" :icon="Document">新建文件</el-dropdown-item>
             <el-dropdown-item command="folder" :icon="Folder">新建文件夹</el-dropdown-item>
+            <el-dropdown-item command="upload" :icon="Upload">上传Markdown文件</el-dropdown-item>
           </el-dropdown-menu>
         </template>
       </el-dropdown>
@@ -100,7 +101,8 @@ import {
   Setting,
   Search,
   Back,
-  FolderOpened
+  FolderOpened,
+  Upload
 } from '@element-plus/icons-vue'
 
 const props = defineProps({

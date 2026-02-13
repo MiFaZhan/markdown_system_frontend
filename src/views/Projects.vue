@@ -390,8 +390,8 @@ function enterProject(project) {
   projectsStore.setCurrentProject(project.id)
   console.log('设置当前项目ID:', project.id)
 
-  // 跳转到工作区页面，使用项目ID作为URL参数
-  const targetPath = `/project/${project.id}`
+  // 跳转到工作区页面，使用 ID + 项目名作为URL参数
+  const targetPath = `/project/${project.id}-${encodeURIComponent(project.name)}`
   console.log('准备跳转到:', targetPath)
 
   router.push(targetPath)
