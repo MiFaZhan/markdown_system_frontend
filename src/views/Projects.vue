@@ -12,27 +12,27 @@
     <main class="projects-main">
       <div class="section-header">
         <h2 class="section-title">我的项目</h2>
-        <el-button type="primary" :icon="Plus" @click="showCreateDialog" class="create-btn" />
+        <el-button type="primary" :icon="Plus" class="create-btn" @click="showCreateDialog" />
         <div class="section-controls">
-            <el-select
-              v-model="sortField"
-              placeholder="排序字段"
-              style="width: 120px"
-              @change="handleSortChange"
-            >
-              <el-option label="创建时间" value="creation_time" />
-              <el-option label="更新时间" value="update_time" />
-              <el-option label="项目名称" value="project_name" />
-            </el-select>
-            <el-select
-              v-model="sortOrder"
-              placeholder="排序方向"
-              style="width: 100px"
-              @change="handleSortChange"
-            >
-              <el-option label="升序" value="asc" />
-              <el-option label="降序" value="desc" />
-            </el-select>
+          <el-select
+            v-model="sortField"
+            placeholder="排序字段"
+            style="width: 120px"
+            @change="handleSortChange"
+          >
+            <el-option label="创建时间" value="creation_time" />
+            <el-option label="更新时间" value="update_time" />
+            <el-option label="项目名称" value="project_name" />
+          </el-select>
+          <el-select
+            v-model="sortOrder"
+            placeholder="排序方向"
+            style="width: 100px"
+            @change="handleSortChange"
+          >
+            <el-option label="升序" value="asc" />
+            <el-option label="降序" value="desc" />
+          </el-select>
         </div>
         <div class="search-input">
           <el-input
@@ -40,8 +40,8 @@
             placeholder="搜索项目名称"
             :prefix-icon="Search"
             clearable
-            @input="handleSearch"
             style="width: 200px"
+            @input="handleSearch"
           />
         </div>
         <div class="view-controls">
@@ -84,7 +84,12 @@
             <div class="project-actions">
               <el-dropdown trigger="click" @command="handleCommand($event, project)">
                 <button class="more-btn" @click.stop>
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"><path fill="currentColor" d="M176 416a112 112 0 1 1 0 224 112 112 0 0 1 0-224m336 0a112 112 0 1 1 0 224 112 112 0 0 1 0-224m336 0a112 112 0 1 1 0 224 112 112 0 0 1 0-224"></path></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+                    <path
+                      fill="currentColor"
+                      d="M176 416a112 112 0 1 1 0 224 112 112 0 0 1 0-224m336 0a112 112 0 1 1 0 224 112 112 0 0 1 0-224m336 0a112 112 0 1 1 0 224 112 112 0 0 1 0-224"
+                    ></path>
+                  </svg>
                 </button>
                 <template #dropdown>
                   <el-dropdown-menu>
@@ -107,30 +112,21 @@
           <!-- 表头 -->
           <div class="projects-list-header">
             <div class="header-icon"></div>
-            <div
-              class="header-name sortable-header"
-              @click="handleListSort('project_name')"
-            >
+            <div class="header-name sortable-header" @click="handleListSort('project_name')">
               名称
               <el-icon v-if="isUserSorted && sortField === 'project_name'" class="sort-icon">
                 <ArrowUp v-if="sortOrder === 'asc'" />
                 <ArrowDown v-else />
               </el-icon>
             </div>
-            <div
-              class="header-date sortable-header"
-              @click="handleListSort('creation_time')"
-            >
+            <div class="header-date sortable-header" @click="handleListSort('creation_time')">
               创建时间
               <el-icon v-if="isUserSorted && sortField === 'creation_time'" class="sort-icon">
                 <ArrowUp v-if="sortOrder === 'asc'" />
                 <ArrowDown v-else />
               </el-icon>
             </div>
-            <div
-              class="header-update sortable-header"
-              @click="handleListSort('update_time')"
-            >
+            <div class="header-update sortable-header" @click="handleListSort('update_time')">
               更新时间
               <el-icon v-if="isUserSorted && sortField === 'update_time'" class="sort-icon">
                 <ArrowUp v-if="sortOrder === 'asc'" />
@@ -178,8 +174,8 @@
         </div>
       </div>
 
-        <!-- 分页组件 -->
-        <!-- <div v-if="projectsStore.pagination.total > 0" class="pagination-container">
+      <!-- 分页组件 -->
+      <!-- <div v-if="projectsStore.pagination.total > 0" class="pagination-container">
           <el-pagination
             v-model:current-page="currentPage"
             v-model:page-size="pageSize"
@@ -967,9 +963,9 @@ onMounted(async () => {
       display: grid;
       grid-template-columns: 1fr auto;
       grid-template-areas:
-        "title create"
-        "controls view"
-        "search search";
+        'title create'
+        'controls view'
+        'search search';
       gap: 12px;
       align-items: center;
     }
@@ -989,7 +985,7 @@ onMounted(async () => {
       /* 此时不需要 flex: 1，因为 Grid 已经控制了位置 */
       flex: initial;
     }
-    
+
     .section-controls .el-select {
       /* 下拉框宽度自适应，避免溢出 */
       width: 85px !important;
@@ -1021,8 +1017,10 @@ onMounted(async () => {
   }
 
   /* 隐藏时间列 */
-  .header-date, .list-date,
-  .header-update, .list-update {
+  .header-date,
+  .list-date,
+  .header-update,
+  .list-update {
     display: none;
   }
 }

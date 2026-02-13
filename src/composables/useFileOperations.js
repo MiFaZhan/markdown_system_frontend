@@ -24,9 +24,9 @@ export function useFileOperations({ onRefresh }) {
               nodeType: 1,
               nodeName: fileName
             }
-            
+
             await createNode(nodeData)
-            
+
             if (onRefresh) {
               await onRefresh()
             }
@@ -51,9 +51,9 @@ export function useFileOperations({ onRefresh }) {
               nodeType: 0,
               nodeName: value
             }
-            
+
             await createNode(nodeData)
-            
+
             if (onRefresh) {
               await onRefresh()
             }
@@ -81,9 +81,9 @@ export function useFileOperations({ onRefresh }) {
           if (currentSelectedNodeId.value === file.id) {
             currentSelectedNodeId.value = null
           }
-          
+
           await deleteNode(file.id)
-          
+
           if (onRefresh) {
             await onRefresh()
           }
@@ -112,14 +112,14 @@ export function useFileOperations({ onRefresh }) {
           if (file.type === 'file') {
             newName = `${newName.replace(/\.md$/i, '')}.md`
           }
-          
+
           const nodeData = {
             nodeId: file.id,
             nodeName: newName
           }
-          
+
           await updateNode(nodeData)
-          
+
           if (onRefresh) {
             await onRefresh()
           }
@@ -135,7 +135,7 @@ export function useFileOperations({ onRefresh }) {
     if (draggingNode.data.id === dropNode.data.id) {
       return false
     }
-    
+
     const isDescendant = (parent, child) => {
       if (!parent.childNodes) return false
       for (const node of parent.childNodes) {
@@ -148,15 +148,15 @@ export function useFileOperations({ onRefresh }) {
       }
       return false
     }
-    
+
     if (isDescendant(draggingNode, dropNode)) {
       return false
     }
-    
+
     if (type === 'inner') {
       return dropNode.data.type === 'folder'
     }
-    
+
     return true
   }
 
@@ -166,7 +166,7 @@ export function useFileOperations({ onRefresh }) {
 
   const handleDrop = async (draggingNode, dropNode, dropType) => {
     let parentId
-    
+
     if (dropType === 'inner') {
       if (dropNode.data.type !== 'folder') {
         ElMessage.warning('只能拖到文件夹中')
@@ -181,16 +181,16 @@ export function useFileOperations({ onRefresh }) {
     } else {
       return
     }
-    
+
     try {
       const nodeData = {
         nodeId: draggingNode.data.id,
         parentId: parentId,
         nodeName: draggingNode.data.name
       }
-      
+
       await updateNode(nodeData)
-      
+
       if (onRefresh) {
         await onRefresh()
       }

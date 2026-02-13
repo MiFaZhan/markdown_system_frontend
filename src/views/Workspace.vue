@@ -21,7 +21,7 @@
       :allow-drag="allowDrag"
       @update:search-keyword="searchKeyword = $event"
       @back="goBack"
-      @create="handleCreate"
+      @create="(cmd) => handleCreate(cmd, currentProjectId)"
       @select-file="selectFile"
       @node-command="handleNodeCommand"
       @drop="handleDrop"
@@ -47,26 +47,23 @@
       :is-mobile="isMobile"
       :width="outlineWidth"
       :side-panel-mode="sidePanelMode"
-      :content-search-keyword="contentSearchKeyword"
-      :content-search-results="contentSearchResults"
       :outline="outline"
       :current-file="currentFile"
-      @update:content-search-keyword="contentSearchKeyword = $event"
+      :current-file-content="currentTabContent"
       @set-mode="setSidePanelMode"
-      @search-content="searchInContent"
-      @jump-to-search="jumpToSearchResult"
       @jump-to-heading="scrollToHeading"
       @start-resize="startResize"
+      @export-markdown="handleExportMarkdown"
+      @export-pdf="handleExportPdf"
+      @export-html="handleExportHtml"
     />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { useFilesStore } from '../stores/files'
-import { useProjectsStore } from '../stores/projects'
+
 import FileTreePanel from '../components/workspace/FileTreePanel.vue'
 import EditorPanel from '../components/workspace/EditorPanel.vue'
 import SidePanel from '../components/workspace/SidePanel.vue'
@@ -75,11 +72,10 @@ import { useFileTree } from '../composables/useFileTree'
 import { useTabs } from '../composables/useTabs'
 import { useEditor } from '../composables/useEditor'
 import { useFileOperations } from '../composables/useFileOperations'
+// import { useContentSearch } from '../composables/useContentSearch'
 
 const route = useRoute()
 const router = useRouter()
-const filesStore = useFilesStore()
-const projectsStore = useProjectsStore()
 
 const fileTreePanelRef = ref(null)
 
@@ -92,7 +88,6 @@ const currentFileId = ref(null)
 const { isMobile } = useResponsive({ sidebar: showSidebar, outline: showOutline })
 
 const {
-  treeRef,
   fileTree,
   searchKeyword,
   currentProjectName,
@@ -104,9 +99,10 @@ const {
   findFileById
 } = useFileTree(route)
 
-const { handleCreate, handleDelete, handleRename, allowDrop, allowDrag, handleDrop } = useFileOperations({
-  onRefresh: loadNodeTree
-})
+const { handleCreate, handleDelete, handleRename, allowDrop, allowDrag, handleDrop } =
+  useFileOperations({
+    onRefresh: loadNodeTree
+  })
 
 const currentFile = computed(() => {
   if (!currentFileId.value) return null
@@ -114,16 +110,19 @@ const currentFile = computed(() => {
 })
 
 const sidePanelMode = ref('none')
-const contentSearchKeyword = ref('')
-const contentSearchResults = ref([])
 const outline = ref([])
+
+const currentTabContent = computed(() => {
+  const currentTab = getTabByFileId(currentFileId.value)
+  return currentTab?.content || ''
+})
 
 const parseOutline = (content) => {
   if (!content) {
     outline.value = []
     return
   }
-  
+
   const headings = []
   const lines = content.split('\n')
   let inCodeBlock = false
@@ -184,11 +183,11 @@ const toggleOutline = () => {
 
 const selectFile = async (file) => {
   currentSelectedNodeId.value = file.id
-  
+
   if (isMobile.value) {
     showSidebar.value = false
   }
-  
+
   await openFile(file)
 }
 
@@ -211,7 +210,7 @@ const handleTabSwitch = (result) => {
     console.log('[Workspace] result 或 result.tab 为空，返回')
     return
   }
-  
+
   if (result.needInit) {
     console.log('[Workspace] 需要初始化编辑器')
     nextTick(() => {
@@ -224,7 +223,7 @@ const handleTabSwitch = (result) => {
       }
     })
   }
-  
+
   currentFileId.value = result.tab.fileId
   console.log('[Workspace] currentFileId 设置为:', result.tab.fileId)
   if (result.tab.content) {
@@ -232,7 +231,17 @@ const handleTabSwitch = (result) => {
   }
 }
 
-const { openTabs, activeTabIndex, openTab, switchTab, reorderTabs, closeTab, closeOthers, closeAllTabs, getTabByFileId } = useTabs({
+const {
+  openTabs,
+  activeTabIndex,
+  openTab,
+  switchTab,
+  reorderTabs,
+  closeTab,
+  closeOthers,
+  closeAllTabs,
+  getTabByFileId
+} = useTabs({
   onSwitch: handleTabSwitch,
   onSave: null
 })
@@ -242,6 +251,18 @@ const { initVditor, updateSaveStatus, loadFileContent, debouncedSave } = useEdit
   onAfterInit: handleEditorInit,
   onOutlineUpdate: parseOutline
 })
+
+// const { contentSearchKeyword, contentSearchResults, jumpToSearchResult } = useContentSearch({
+//   getCurrentFileId: () => currentFileId.value,
+//   getVditorInstance: () => {
+//     const currentTab = getTabByFileId(currentFileId.value)
+//     return currentTab?.vditorInstance
+//   },
+//   onSelectFile: selectFile
+// })
+// const contentSearchKeyword = ref('')
+// const contentSearchResults = ref([])
+// const jumpToSearchResult = () => {}
 
 const openFile = async (file) => {
   console.log('[Workspace] openFile 开始:', file)
@@ -304,7 +325,7 @@ const setSidePanelMode = (mode) => {
 const scrollToHeading = (heading) => {
   const currentTab = getTabByFileId(currentFileId.value)
   if (!currentTab) return
-  
+
   const container = document.getElementById(currentTab.containerId)
   if (!container) return
 
@@ -312,28 +333,32 @@ const scrollToHeading = (heading) => {
     if (!node || node === document.body || node === document.documentElement) {
       return null
     }
-    
+
     const style = window.getComputedStyle(node)
     const overflowY = style.overflowY
     const isScrollable = overflowY !== 'visible' && overflowY !== 'hidden'
-    
+
     if (isScrollable && node.scrollHeight >= node.clientHeight) {
       return node
     }
-    
+
     return getScrollParent(node.parentNode)
   }
-  
+
   const scrollToElement = (el) => {
     const scrollContainer = getScrollParent(el)
-    
+
     if (scrollContainer) {
       const elRect = el.getBoundingClientRect()
       const containerRect = scrollContainer.getBoundingClientRect()
       const currentScrollTop = scrollContainer.scrollTop
-      
-      const targetScrollTop = currentScrollTop + (elRect.top - containerRect.top) - (scrollContainer.clientHeight / 2) + (elRect.height / 2)
-      
+
+      const targetScrollTop =
+        currentScrollTop +
+        (elRect.top - containerRect.top) -
+        scrollContainer.clientHeight / 2 +
+        elRect.height / 2
+
       scrollContainer.scrollTo({
         top: targetScrollTop,
         behavior: 'smooth'
@@ -341,7 +366,7 @@ const scrollToHeading = (heading) => {
     } else {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }
-    
+
     document.querySelectorAll('.heading-highlight').forEach((e) => {
       e.classList.remove('heading-highlight')
     })
@@ -361,7 +386,7 @@ const scrollToHeading = (heading) => {
       return
     }
   }
-  
+
   const allHeadings = container.querySelectorAll(
     '.vditor-ir .vditor-reset h1, .vditor-ir .vditor-reset h2, .vditor-ir .vditor-reset h3, .vditor-ir .vditor-reset h4, .vditor-ir .vditor-reset h5, .vditor-ir .vditor-reset h6'
   )
@@ -371,179 +396,6 @@ const scrollToHeading = (heading) => {
       scrollToElement(el)
       return
     }
-  }
-}
-
-const searchInContent = () => {
-  const keyword = contentSearchKeyword.value.trim()
-  if (!keyword) {
-    contentSearchResults.value = []
-    return
-  }
-
-  const currentTab = getTabByFileId(currentFileId.value)
-  if (!currentTab || !currentTab.content) {
-    contentSearchResults.value = []
-    return
-  }
-
-  const lines = currentTab.content.split('\n')
-  const results = []
-  const lowerKeyword = keyword.toLowerCase()
-  let matchCount = 0
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i]
-    if (line.toLowerCase().includes(lowerKeyword)) {
-      results.push({
-        line: i + 1,
-        text: line.trim() || '(空行)',
-        matchIndex: matchCount
-      })
-      matchCount++
-    }
-  }
-
-  contentSearchResults.value = results
-}
-
-const jumpToSearchResult = (result) => {
-  const currentTab = getTabByFileId(currentFileId.value)
-  if (!currentTab) return
-
-  const container = document.getElementById(currentTab.containerId)
-  if (!container) return
-
-  const irPreview = container.querySelector('.vditor-ir')
-  if (!irPreview) return
-
-  const previewContent = irPreview.querySelector('.vditor-reset')
-  if (!previewContent) return
-
-  const keyword = contentSearchKeyword.value.trim()
-  if (!keyword) return
-
-  const targetLine = result.line
-  const lowerKeyword = keyword.toLowerCase()
-
-  const allParagraphs = previewContent.querySelectorAll('p, li, td, th, h1, h2, h3, h4, h5, h6, pre, code')
-  let targetElement = null
-  let currentLineNumber = 1
-
-  for (const para of allParagraphs) {
-    const textContent = para.textContent
-    const lineCount = textContent ? textContent.split('\n').length : 1
-
-    if (currentLineNumber <= targetLine && currentLineNumber + lineCount - 1 >= targetLine) {
-      targetElement = para
-      break
-    }
-
-    currentLineNumber += lineCount
-  }
-
-  if (!targetElement) {
-    const allElements = previewContent.querySelectorAll('*')
-    for (const el of allElements) {
-      if (el.textContent.trim() === result.text.trim() || el.textContent.includes(result.text)) {
-        targetElement = el
-        break
-      }
-    }
-  }
-
-  if (!targetElement) {
-    return
-  }
-
-  const walker = document.createTreeWalker(
-    targetElement,
-    NodeFilter.SHOW_TEXT,
-    null,
-    false
-  )
-
-  let foundNode = null
-  let foundStart = 0
-  let foundEnd = 0
-
-  while (walker.nextNode()) {
-    const node = walker.currentNode
-    const text = node.textContent
-    const lowerText = text.toLowerCase()
-
-    if (lowerText.includes(lowerKeyword)) {
-      foundNode = node
-      foundStart = lowerText.indexOf(lowerKeyword)
-      foundEnd = foundStart + keyword.length
-      break
-    }
-  }
-
-  if (!foundNode) {
-    const allTextNodes = []
-    const textWalker = document.createTreeWalker(
-      previewContent,
-      NodeFilter.SHOW_TEXT,
-      null,
-      false
-    )
-
-    while (textWalker.nextNode()) {
-      const node = textWalker.currentNode
-      if (node.textContent.toLowerCase().includes(lowerKeyword)) {
-        allTextNodes.push(node)
-      }
-    }
-
-    if (allTextNodes.length > 0) {
-      const resultIndex = contentSearchResults.value.findIndex(r => r.line === result.line)
-      if (resultIndex >= 0 && resultIndex < allTextNodes.length) {
-        foundNode = allTextNodes[resultIndex]
-        const text = foundNode.textContent
-        const lowerText = text.toLowerCase()
-        foundStart = lowerText.indexOf(lowerKeyword)
-        foundEnd = foundStart + keyword.length
-      }
-    }
-  }
-
-  if (foundNode) {
-    const range = document.createRange()
-    range.setStart(foundNode, foundStart)
-    range.setEnd(foundNode, foundEnd)
-
-    const selection = window.getSelection()
-    selection.removeAllRanges()
-    selection.addRange(range)
-
-    const parentElement = foundNode.parentElement
-    if (parentElement) {
-      parentElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
-    }
-
-    const mark = document.createElement('mark')
-    mark.className = 'search-match-highlight'
-    mark.style.backgroundColor = '#fde047'
-    mark.style.color = '#854d0e'
-    mark.style.padding = '0 2px'
-    mark.style.borderRadius = '2px'
-
-    range.surroundContents(mark)
-
-    setTimeout(() => {
-      selection.removeAllRanges()
-    }, 100)
-
-    setTimeout(() => {
-      if (mark.parentElement) {
-        const parent = mark.parentElement
-        while (mark.firstChild) {
-          parent.insertBefore(mark.firstChild, mark)
-        }
-        parent.removeChild(mark)
-      }
-    }, 3000)
   }
 }
 
@@ -573,6 +425,93 @@ const startResize = (panel, e) => {
   document.body.style.userSelect = 'none'
   document.addEventListener('mousemove', onMouseMove)
   document.addEventListener('mouseup', onMouseUp)
+}
+
+const handleExportMarkdown = () => {
+  const currentTab = getTabByFileId(currentFileId.value)
+  if (!currentTab || !currentTab.vditorInstance) return
+
+  const content = currentTab.vditorInstance.getValue()
+  const fileName = currentTab.name || 'document'
+  const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `${fileName}.md`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+const handleExportPdf = () => {
+  const currentTab = getTabByFileId(currentFileId.value)
+  if (!currentTab || !currentTab.vditorInstance) return
+
+  const previewElement = currentTab.vditorInstance.vditor.element.querySelector('.vditor-preview')
+  if (!previewElement) return
+
+  const originalDisplay = previewElement.style.display
+  const originalVisibility = previewElement.style.visibility
+
+  previewElement.style.display = 'block'
+  previewElement.style.visibility = 'visible'
+
+  window.print()
+
+  setTimeout(() => {
+    previewElement.style.display = originalDisplay
+    previewElement.style.visibility = originalVisibility
+  }, 100)
+}
+
+const handleExportHtml = () => {
+  const currentTab = getTabByFileId(currentFileId.value)
+  if (!currentTab || !currentTab.vditorInstance) return
+
+  const content = currentTab.vditorInstance.getHTML()
+  const fileName = currentTab.name || 'document'
+  
+  const fullHtml = `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${fileName}</title>
+  <link rel="stylesheet" href="/vditor/dist/index.css">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.6;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      color: #333;
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #1a1a1a;
+        color: #e0e0e0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="vditor-reset">
+    ${content}
+  </div>
+</body>
+</html>`
+
+  const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `${fileName}.html`
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
 }
 
 onMounted(() => {

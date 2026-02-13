@@ -13,7 +13,7 @@
       @toggle-outline="emit('toggle-outline')"
       @reorder-tabs="emit('reorder-tabs', $event)"
     />
-    
+
     <div id="editor-container" class="editor-container">
       <div v-if="tabs.length === 0" class="empty-state">
         <el-icon :size="64" :color="'var(--el-text-color-placeholder)'">
@@ -36,7 +36,15 @@ const props = defineProps({
   showOutline: Boolean
 })
 
-const emit = defineEmits(['switch-tab', 'close-tab', 'close-others', 'close-all', 'toggle-sidebar', 'toggle-outline', 'reorder-tabs'])
+const emit = defineEmits([
+  'switch-tab',
+  'close-tab',
+  'close-others',
+  'close-all',
+  'toggle-sidebar',
+  'toggle-outline',
+  'reorder-tabs'
+])
 </script>
 
 <style scoped>

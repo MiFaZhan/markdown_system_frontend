@@ -57,10 +57,7 @@
     <div class="toolbar-divider"></div>
 
     <div class="right-toolbar">
-      <el-tooltip
-        :content="showOutline ? '收起右侧边栏' : '展开右侧边栏'"
-        placement="bottom"
-      >
+      <el-tooltip :content="showOutline ? '收起右侧边栏' : '展开右侧边栏'" placement="bottom">
         <el-button
           link
           class="toolbar-btn"
@@ -70,8 +67,12 @@
           <template #icon>
             <span class="custom-icon">
               <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
-                <path d="M824.888889 170.666667H199.111111a56.888889 56.888889 0 0 0-56.888889 56.888889v568.888888a56.888889 56.888889 0 0 0 56.888889 56.888889h625.777778a56.888889 56.888889 0 0 0 56.888889-56.888889V227.555556a56.888889 56.888889 0 0 0-56.888889-56.888889z m0 597.333333a28.444444 28.444444 0 0 1-28.444445 28.444444H227.555556a28.444444 28.444444 0 0 1-28.444445-28.444444V256a28.444444 28.444444 0 0 1 28.444445-28.444444h568.888888a28.444444 28.444444 0 0 1 28.444445 28.444444z"></path>
-                <path d="M512 256m28.444444 0l227.555556 0q28.444444 0 28.444444 28.444444l0 455.111112q0 28.444444-28.444444 28.444444l-227.555556 0q-28.444444 0-28.444444-28.444444l0-455.111112q0-28.444444 28.444444-28.444444Z"></path>
+                <path
+                  d="M824.888889 170.666667H199.111111a56.888889 56.888889 0 0 0-56.888889 56.888889v568.888888a56.888889 56.888889 0 0 0 56.888889 56.888889h625.777778a56.888889 56.888889 0 0 0 56.888889-56.888889V227.555556a56.888889 56.888889 0 0 0-56.888889-56.888889z m0 597.333333a28.444444 28.444444 0 0 1-28.444445 28.444444H227.555556a28.444444 28.444444 0 0 1-28.444445-28.444444V256a28.444444 28.444444 0 0 1 28.444445-28.444444h568.888888a28.444444 28.444444 0 0 1 28.444445 28.444444z"
+                ></path>
+                <path
+                  d="M512 256m28.444444 0l227.555556 0q28.444444 0 28.444444 28.444444l0 455.111112q0 28.444444-28.444444 28.444444l-227.555556 0q-28.444444 0-28.444444-28.444444l0-455.111112q0-28.444444 28.444444-28.444444Z"
+                ></path>
               </svg>
             </span>
           </template>
@@ -138,7 +139,15 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['switch-tab', 'close-tab', 'close-others', 'close-all', 'toggle-sidebar', 'toggle-outline', 'reorder-tabs'])
+const emit = defineEmits([
+  'switch-tab',
+  'close-tab',
+  'close-others',
+  'close-all',
+  'toggle-sidebar',
+  'toggle-outline',
+  'reorder-tabs'
+])
 
 const getDisplayName = (fileName) => {
   return fileName.replace(/\.md$/, '')
@@ -176,7 +185,11 @@ const handleMenuCommand = (command) => {
 }
 
 const handleClickOutside = (event) => {
-  if (contextMenuVisible.value && contextMenuRef.value && !contextMenuRef.value.contains(event.target)) {
+  if (
+    contextMenuVisible.value &&
+    contextMenuRef.value &&
+    !contextMenuRef.value.contains(event.target)
+  ) {
     contextMenuVisible.value = false
     contextMenuIndex.value = -1
   }

@@ -16,7 +16,7 @@ export function useFileTree(route) {
 
   const convertNodeTreeToFileTree = (nodeTreeResponse) => {
     if (!nodeTreeResponse || !nodeTreeResponse.rootNodes) return []
-    
+
     const convertNodeItem = (nodeItem) => ({
       id: nodeItem.nodeId,
       parentId: nodeItem.parentId,
@@ -26,7 +26,7 @@ export function useFileTree(route) {
       creationTime: nodeItem.creationTime,
       children: nodeItem.children?.map(convertNodeItem) || []
     })
-    
+
     return nodeTreeResponse.rootNodes.map(convertNodeItem)
   }
 
@@ -34,15 +34,15 @@ export function useFileTree(route) {
     if (!currentProjectId.value) {
       return
     }
-    
+
     try {
       loading.value = true
       const treeResponse = await getNodeTree(currentProjectId.value)
-      
+
       if (treeResponse.projectName) {
         currentProjectName.value = treeResponse.projectName
       }
-      
+
       fileTree.value = convertNodeTreeToFileTree(treeResponse)
     } catch (error) {
       ElMessage.error('加载文件树失败')
@@ -60,9 +60,7 @@ export function useFileTree(route) {
       const nodeName = node.name.toLowerCase()
       const nameMatches = nodeName.includes(lowerKeyword)
 
-      const filteredChildren = node.children
-        ? node.children.map(filterNode).filter(Boolean)
-        : []
+      const filteredChildren = node.children ? node.children.map(filterNode).filter(Boolean) : []
 
       if (nameMatches || filteredChildren.length > 0) {
         return {
@@ -87,7 +85,10 @@ export function useFileTree(route) {
     const countNodes = (nodes) => {
       let count = 0
       for (const node of nodes) {
-        if (node.type === 'file' && node.name.toLowerCase().includes(searchKeyword.value.toLowerCase())) {
+        if (
+          node.type === 'file' &&
+          node.name.toLowerCase().includes(searchKeyword.value.toLowerCase())
+        ) {
           count++
         }
         if (node.children) {
@@ -111,18 +112,22 @@ export function useFileTree(route) {
     return null
   }
 
-  watch(() => route.params.projectId, async (newProjectId) => {
-    if (newProjectId) {
-      currentSelectedNodeId.value = null
-      currentProjectName.value = ''
-      
-      const projectId = parseInt(newProjectId)
-      projectsStore.setCurrentProject(projectId)
-      
-      await nextTick()
-      await loadNodeTree()
-    }
-  }, { immediate: true })
+  watch(
+    () => route.params.projectId,
+    async (newProjectId) => {
+      if (newProjectId) {
+        currentSelectedNodeId.value = null
+        currentProjectName.value = ''
+
+        const projectId = parseInt(newProjectId)
+        projectsStore.setCurrentProject(projectId)
+
+        await nextTick()
+        await loadNodeTree()
+      }
+    },
+    { immediate: true }
+  )
 
   return {
     treeRef,

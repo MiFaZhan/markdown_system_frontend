@@ -24,7 +24,7 @@ export function useTabs({ onSwitch, onSave }) {
 
   const openTab = async (file, contentData) => {
     console.log('[useTabs] openTab 开始:', file, contentData)
-    const existingIndex = openTabs.value.findIndex(tab => tab.fileId === file.id)
+    const existingIndex = openTabs.value.findIndex((tab) => tab.fileId === file.id)
     console.log('[useTabs] existingIndex:', existingIndex)
     if (existingIndex !== -1) {
       console.log('[useTabs] 标签已存在，切换到:', existingIndex)
@@ -32,22 +32,22 @@ export function useTabs({ onSwitch, onSave }) {
       onSwitch(result)
       return
     }
-    
+
     if (openTabs.value.length >= 10) {
       ElMessage.warning('最多同时打开 10 个标签')
       return
     }
-    
+
     const newTab = createTab(file, contentData)
     console.log('[useTabs] 创建新标签:', newTab)
     openTabs.value.push(newTab)
     console.log('[useTabs] openTabs 现在的数量:', openTabs.value.length)
-    
+
     const newIndex = openTabs.value.length - 1
     activeTabIndex.value = newIndex
     console.log('[useTabs] 调用 onSwitch，结果:', { needInit: true, tab: newTab, index: newIndex })
     onSwitch({ needInit: true, tab: newTab, index: newIndex })
-    
+
     return newTab
   }
 
@@ -55,8 +55,11 @@ export function useTabs({ onSwitch, onSave }) {
     console.log('[useTabs] switchTab 开始，索引:', index)
     console.log('[useTabs] 当前 activeTabIndex:', activeTabIndex.value)
     console.log('[useTabs] openTabs 长度:', openTabs.value.length)
-    console.log('[useTabs] openTabs 内容:', openTabs.value.map(t => ({ id: t.fileId, name: t.fileName, initialized: t.isInitialized })))
-    
+    console.log(
+      '[useTabs] openTabs 内容:',
+      openTabs.value.map((t) => ({ id: t.fileId, name: t.fileName, initialized: t.isInitialized }))
+    )
+
     if (index < 0 || index >= openTabs.value.length) {
       console.log('[useTabs] 索引无效，返回 null')
       return { tab: null, index: -1 }
@@ -66,25 +69,30 @@ export function useTabs({ onSwitch, onSave }) {
       console.log('[useTabs] 切换到相同标签，返回:', targetTab)
       return { tab: targetTab, index, needInit: false }
     }
-    
+
     if (activeTabIndex.value >= 0) {
       const currentTab = openTabs.value[activeTabIndex.value]
       console.log('[useTabs] 当前标签 (需要隐藏):', currentTab)
       if (currentTab?.vditorInstance) {
         const currentContainer = document.getElementById(currentTab.containerId)
-        console.log('[useTabs] 当前标签容器 ID:', currentTab.containerId, '存在:', !!currentContainer)
+        console.log(
+          '[useTabs] 当前标签容器 ID:',
+          currentTab.containerId,
+          '存在:',
+          !!currentContainer
+        )
         if (currentContainer) {
           console.log('[useTabs] 隐藏当前标签容器')
           currentContainer.style.display = 'none'
         }
       }
     }
-    
+
     activeTabIndex.value = index
     const targetTab = openTabs.value[index]
     console.log('[useTabs] 目标标签:', targetTab)
     console.log('[useTabs] targetTab.isInitialized:', targetTab.isInitialized)
-    
+
     if (!targetTab.isInitialized) {
       console.log('[useTabs] 标签未初始化，需要初始化')
       return { needInit: true, tab: targetTab, index }
@@ -96,17 +104,21 @@ export function useTabs({ onSwitch, onSave }) {
         targetContainer.style.display = 'block'
       }
     }
-    
-    console.log('[useTabs] switchTab 返回:', { tab: targetTab, index, needInit: !targetTab.isInitialized })
+
+    console.log('[useTabs] switchTab 返回:', {
+      tab: targetTab,
+      index,
+      needInit: !targetTab.isInitialized
+    })
     return { tab: targetTab, index, needInit: !targetTab.isInitialized }
   }
 
   const reorderTabs = ({ fromIndex, toIndex }) => {
     if (fromIndex === toIndex) return
-    
+
     const movedTab = openTabs.value.splice(fromIndex, 1)[0]
     openTabs.value.splice(toIndex, 0, movedTab)
-    
+
     if (activeTabIndex.value === fromIndex) {
       activeTabIndex.value = toIndex
     } else if (fromIndex < activeTabIndex.value && toIndex >= activeTabIndex.value) {
@@ -118,7 +130,7 @@ export function useTabs({ onSwitch, onSave }) {
 
   const closeTab = async (index) => {
     const tab = openTabs.value[index]
-    
+
     if (tab.isDirty) {
       try {
         await ElMessageBox.confirm(
@@ -134,7 +146,7 @@ export function useTabs({ onSwitch, onSave }) {
         return false
       }
     }
-    
+
     if (tab.vditorInstance) {
       try {
         tab.vditorInstance.destroy()
@@ -142,19 +154,19 @@ export function useTabs({ onSwitch, onSave }) {
         console.warn('销毁 vditor 失败:', error)
       }
     }
-    
+
     const container = document.getElementById(tab.containerId)
     if (container) {
       container.remove()
     }
-    
+
     if (saveTimers[tab.fileId]) {
       clearTimeout(saveTimers[tab.fileId])
       delete saveTimers[tab.fileId]
     }
-    
+
     openTabs.value.splice(index, 1)
-    
+
     let newActiveIndex = activeTabIndex.value
     if (openTabs.value.length === 0) {
       newActiveIndex = -1
@@ -165,7 +177,7 @@ export function useTabs({ onSwitch, onSave }) {
         newActiveIndex = openTabs.value.length - 1
       }
     }
-    
+
     return { newActiveIndex, needSwitch: newActiveIndex !== activeTabIndex.value }
   }
 
@@ -173,7 +185,7 @@ export function useTabs({ onSwitch, onSave }) {
     const tabsToClose = openTabs.value
       .map((tab, index) => ({ tab, index }))
       .filter(({ index }) => index !== exceptIndex)
-    
+
     for (const { tab, index } of tabsToClose) {
       if (tab.isDirty) {
         try {
@@ -190,7 +202,7 @@ export function useTabs({ onSwitch, onSave }) {
           continue
         }
       }
-      
+
       if (tab.vditorInstance) {
         try {
           tab.vditorInstance.destroy()
@@ -198,18 +210,18 @@ export function useTabs({ onSwitch, onSave }) {
           console.warn('销毁 vditor 失败:', error)
         }
       }
-      
+
       const container = document.getElementById(tab.containerId)
       if (container) {
         container.remove()
       }
-      
+
       if (saveTimers[tab.fileId]) {
         clearTimeout(saveTimers[tab.fileId])
         delete saveTimers[tab.fileId]
       }
     }
-    
+
     const exceptTab = openTabs.value[exceptIndex]
     openTabs.value = [exceptTab]
     activeTabIndex.value = 0
@@ -217,7 +229,7 @@ export function useTabs({ onSwitch, onSave }) {
 
   const closeAllTabs = async () => {
     const tabsToClose = [...openTabs.value]
-    
+
     for (const tab of tabsToClose) {
       if (tab.isDirty) {
         try {
@@ -234,7 +246,7 @@ export function useTabs({ onSwitch, onSave }) {
           continue
         }
       }
-      
+
       if (tab.vditorInstance) {
         try {
           tab.vditorInstance.destroy()
@@ -242,18 +254,18 @@ export function useTabs({ onSwitch, onSave }) {
           console.warn('销毁 vditor 失败:', error)
         }
       }
-      
+
       const container = document.getElementById(tab.containerId)
       if (container) {
         container.remove()
       }
-      
+
       if (saveTimers[tab.fileId]) {
         clearTimeout(saveTimers[tab.fileId])
         delete saveTimers[tab.fileId]
       }
     }
-    
+
     openTabs.value = []
     activeTabIndex.value = -1
   }
@@ -263,7 +275,7 @@ export function useTabs({ onSwitch, onSave }) {
   }
 
   const getTabByFileId = (fileId) => {
-    return openTabs.value.find(t => t.fileId === fileId)
+    return openTabs.value.find((t) => t.fileId === fileId)
   }
 
   const updateTabContent = (fileId, content) => {
@@ -286,11 +298,11 @@ export function useTabs({ onSwitch, onSave }) {
   const debouncedSave = (fileId, saveFn) => {
     const tab = getTabByFileId(fileId)
     if (!tab) return
-    
+
     if (saveTimers[fileId]) {
       clearTimeout(saveTimers[fileId])
     }
-    
+
     saveTimers[fileId] = setTimeout(() => {
       saveFn(fileId)
     }, 1000)

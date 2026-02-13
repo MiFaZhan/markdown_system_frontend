@@ -22,11 +22,11 @@
     <div class="sidebar-search">
       <el-input
         :model-value="searchKeyword"
-        @input="emit('update:searchKeyword', $event)"
         placeholder="搜索..."
         :prefix-icon="Search"
         size="small"
         clearable
+        @input="emit('update:searchKeyword', $event)"
       />
       <div v-if="searchKeyword && searchResultCount > 0" class="search-result-count">
         找到 {{ searchResultCount }} 个文件
@@ -93,7 +93,15 @@
 </template>
 
 <script setup>
-import { Plus, Document, Folder, Setting, Search, Back, FolderOpened } from '@element-plus/icons-vue'
+import {
+  Plus,
+  Document,
+  Folder,
+  Setting,
+  Search,
+  Back,
+  FolderOpened
+} from '@element-plus/icons-vue'
 
 const props = defineProps({
   show: Boolean,
@@ -110,7 +118,15 @@ const props = defineProps({
   treeRef: Object
 })
 
-const emit = defineEmits(['back', 'create', 'select-file', 'node-command', 'drop', 'start-resize', 'update:searchKeyword'])
+const emit = defineEmits([
+  'back',
+  'create',
+  'select-file',
+  'node-command',
+  'drop',
+  'start-resize',
+  'update:searchKeyword'
+])
 
 const selectFile = (file) => {
   if (file.type !== 'folder') {
