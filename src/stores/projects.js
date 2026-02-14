@@ -46,7 +46,6 @@ export const useProjectsStore = defineStore('projects', () => {
 
       return result
     } catch (error) {
-      console.error('获取项目列表失败:', error)
       ElMessage.error('获取项目列表失败')
     } finally {
       loading.value = false
@@ -62,7 +61,6 @@ export const useProjectsStore = defineStore('projects', () => {
       await fetchProjects()
       return result
     } catch (error) {
-      console.error('创建项目失败:', error)
       throw error
     }
   }
@@ -77,7 +75,6 @@ export const useProjectsStore = defineStore('projects', () => {
       await fetchProjects()
       return result
     } catch (error) {
-      console.error('更新项目失败:', error)
       throw error
     }
   }
@@ -91,7 +88,6 @@ export const useProjectsStore = defineStore('projects', () => {
       // 重新获取当前页数据
       await fetchProjects()
     } catch (error) {
-      console.error('删除项目失败:', error)
       throw error
     }
   }
@@ -127,7 +123,6 @@ export const useProjectsStore = defineStore('projects', () => {
       const result = await projectService.getProject(projectId)
       return result
     } catch (error) {
-      console.error('获取项目详情失败:', error)
       throw error
     }
   }

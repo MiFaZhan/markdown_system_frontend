@@ -459,4 +459,17 @@ body {
     background-color: var(--dr-accent) !important;
     color: #fff !important;
   }
+
+  /* Link 类型 danger 按钮在暗色模式下的样式 */
+  .el-button--danger.is-link {
+    background: transparent !important;
+    border: none !important;
+    color: var(--dr-danger-hover) !important;
+  }
+
+  .el-button--danger.is-link:hover {
+    background: transparent !important;
+    border: none !important;
+    color: #ff7878 !important;
+  }
 }

@@ -31,7 +31,7 @@ export function useExportAndCopy(getTabByFileId, currentFileId) {
 
     const markdown = currentTab.vditorInstance.getValue()
     const fileName = currentTab.fileName || 'document'
-    
+
     const content = await Vditor.md2html(markdown, {
       cdn: '/vditor/',
       preview: {
@@ -91,7 +91,7 @@ export function useExportAndCopy(getTabByFileId, currentFileId) {
     iframe.style.height = '0'
     iframe.style.border = '0'
     document.body.appendChild(iframe)
-    
+
     const doc = iframe.contentWindow.document
     doc.open()
     doc.write(fullHtml)
@@ -112,7 +112,7 @@ export function useExportAndCopy(getTabByFileId, currentFileId) {
 
     const content = currentTab.vditorInstance.getHTML()
     const fileName = currentTab.fileName || 'document'
-    
+
     const fullHtml = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -160,11 +160,14 @@ export function useExportAndCopy(getTabByFileId, currentFileId) {
     if (!currentTab || !currentTab.vditorInstance) return
 
     const content = currentTab.vditorInstance.getValue()
-    navigator.clipboard.writeText(content).then(() => {
-      ElMessage.success('已复制 Markdown')
-    }).catch(() => {
-      ElMessage.error('复制失败')
-    })
+    navigator.clipboard
+      .writeText(content)
+      .then(() => {
+        ElMessage.success('已复制 Markdown')
+      })
+      .catch(() => {
+        ElMessage.error('复制失败')
+      })
   }
 
   const handleCopyZhihu = async () => {
@@ -190,7 +193,7 @@ export function useExportAndCopy(getTabByFileId, currentFileId) {
         }
       })
 
-      await new Promise(resolve => setTimeout(resolve, 300))
+      await new Promise((resolve) => setTimeout(resolve, 300))
 
       const zhihuBtn = tempDiv.querySelector('button[data-type="zhihu"]')
       if (zhihuBtn) {
@@ -228,7 +231,7 @@ export function useExportAndCopy(getTabByFileId, currentFileId) {
         }
       })
 
-      await new Promise(resolve => setTimeout(resolve, 300))
+      await new Promise((resolve) => setTimeout(resolve, 300))
 
       const wechatBtn = tempDiv.querySelector('button[data-type="mp-wechat"]')
       if (wechatBtn) {

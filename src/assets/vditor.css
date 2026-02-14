@@ -40,8 +40,12 @@
 }
 
 @keyframes rotating {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .vditor-toolbar {
@@ -57,7 +61,7 @@
   margin: 0 !important;
   padding: 0 !important;
   background: transparent !important;
-  font-family: Consolas, "Courier New", monospace !important;
+  font-family: Consolas, 'Courier New', monospace !important;
 }
 
 .vditor-wrapper .vditor {
@@ -227,7 +231,8 @@
 }
 
 @keyframes searchMatchPulse {
-  0%, 100% {
+  0%,
+  100% {
     background-color: var(--el-color-warning-light-6);
   }
   50% {
@@ -241,7 +246,8 @@
   }
 
   @keyframes searchMatchPulseDark {
-    0%, 100% {
+    0%,
+    100% {
       background-color: rgba(230, 162, 60, 0.4);
     }
     50% {

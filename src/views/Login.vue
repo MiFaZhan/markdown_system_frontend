@@ -8,7 +8,7 @@
       </template>
       <el-form :model="form" label-width="0">
         <el-form-item>
-          <el-input v-model="form.username" placeholder="请输入用户名" :prefix-icon="User" />
+          <el-input v-model="form.account" placeholder="请输入用户名或邮箱" :prefix-icon="User" />
         </el-form-item>
         <el-form-item>
           <el-input
@@ -41,18 +41,18 @@ const router = useRouter()
 const loading = ref(false)
 
 const form = reactive({
-  username: '',
+  account: '',
   password: ''
 })
 
 const handleLogin = async () => {
-  if (!form.username || !form.password) return ElMessage.warning('请输入用户名和密码')
+  if (!form.account || !form.password) return ElMessage.warning('请输入账号和密码')
 
   loading.value = true
   try {
-    await store.login(form.username, form.password)
+    await store.login(form.account, form.password)
     ElMessage.success('登录成功')
-    router.push('/')
+    router.push('/index')
   } catch (error) {
     ElMessage.error(error)
   } finally {

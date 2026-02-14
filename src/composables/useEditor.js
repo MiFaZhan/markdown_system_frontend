@@ -5,16 +5,14 @@ import 'vditor/dist/index.css'
 import { getMarkdownContent, updateMarkdownContent } from '../api/contentService'
 import { uploadImage } from '../api/imageService'
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+const VDITOR_CDN = import.meta.env.VITE_VDITOR_CDN || '/vditor/'
+
 export function useEditor({ onContentChange, onAfterInit, onOutlineUpdate }) {
   const saveTimers = ref({})
 
   const initVditor = (tab, onInput) => {
-    console.log('[useEditor] initVditor 开始，tab:', tab)
-    console.log('[useEditor] tab.isInitialized:', tab.isInitialized)
-    console.log('[useEditor] tab.vditorInstance:', tab.vditorInstance)
-
     if (tab.isInitialized && tab.vditorInstance) {
-      console.log('[useEditor] 编辑器已初始化，只切换容器显示')
       const editorContainer = document.getElementById('editor-container')
       if (editorContainer) {
         Array.from(editorContainer.children).forEach((child) => {
@@ -29,16 +27,13 @@ export function useEditor({ onContentChange, onAfterInit, onOutlineUpdate }) {
     }
 
     const editorContainer = document.getElementById('editor-container')
-    console.log('[useEditor] editor-container 存在:', !!editorContainer)
     if (!editorContainer) {
       ElMessage.error('编辑器容器不存在')
       return null
     }
 
     let container = document.getElementById(tab.containerId)
-    console.log('[useEditor] 容器 ID:', tab.containerId, '存在:', !!container)
     if (container) {
-      console.log('[useEditor] 容器已存在，移除')
       container.remove()
     }
 
@@ -54,13 +49,6 @@ export function useEditor({ onContentChange, onAfterInit, onOutlineUpdate }) {
         child.style.display = 'none'
       }
     })
-
-    console.log('[useEditor] 新容器已添加到 DOM')
-    console.log('[useEditor] editor-container 的子元素数量:', editorContainer.children.length)
-    console.log(
-      '[useEditor] 所有子元素:',
-      Array.from(editorContainer.children).map((c) => ({ id: c.id, display: c.style.display }))
-    )
 
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
 
@@ -86,7 +74,7 @@ export function useEditor({ onContentChange, onAfterInit, onOutlineUpdate }) {
         },
         upload: {
           accept: 'image/*',
-          url: 'http://localhost:8080/api/image/upload',
+          url: `${API_BASE_URL}/api/image/upload`,
           multiple: false,
           fieldName: 'file[]',
           extraData: () => {
@@ -101,7 +89,7 @@ export function useEditor({ onContentChange, onAfterInit, onOutlineUpdate }) {
               const projectId = tab.projectId || 1
               const nodeId = tab.fileId || 1
               const imageUrl = await uploadImage(file, projectId, nodeId)
-              const fullImageUrl = `http://localhost:8080${imageUrl}`
+              const fullImageUrl = `${API_BASE_URL}${imageUrl}`
               tab.vditorInstance.insertValue(`![${file.name}](${fullImageUrl})`)
               ElMessage.success('图片上传成功')
             } catch (error) {
@@ -278,9 +266,7 @@ export function useEditor({ onContentChange, onAfterInit, onOutlineUpdate }) {
     if (vditorInstance) {
       try {
         vditorInstance.destroy()
-      } catch (error) {
-        console.warn('销毁 vditor 失败:', error)
-      }
+      } catch (error) {}
     }
   }
 

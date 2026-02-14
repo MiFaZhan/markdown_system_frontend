@@ -29,11 +29,8 @@ export function updateMarkdownContent(nodeId, content, version) {
  * @param {string} keyword - 搜索关键词
  */
 export function searchContentInFile(nodeId, keyword) {
-  console.log('[contentService] searchContentInFile called, nodeId:', nodeId, 'keyword:', keyword)
-  const result = post('/markdown-content/search', {
+  return post('/markdown-content/search', {
     nodeId,
     keyword
   })
-  console.log('[contentService] post request created')
-  return result
 }

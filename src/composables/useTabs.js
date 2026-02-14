@@ -4,7 +4,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 export function useTabs({ onSwitch, onSave }) {
   const openTabs = ref([])
   const activeTabIndex = ref(-1)
-  let saveTimers = {}
+  const saveTimers = ref({})
 
   const createTab = (file, contentData) => {
     return {
@@ -23,11 +23,8 @@ export function useTabs({ onSwitch, onSave }) {
   }
 
   const openTab = async (file, contentData) => {
-    console.log('[useTabs] openTab 开始:', file, contentData)
     const existingIndex = openTabs.value.findIndex((tab) => tab.fileId === file.id)
-    console.log('[useTabs] existingIndex:', existingIndex)
     if (existingIndex !== -1) {
-      console.log('[useTabs] 标签已存在，切换到:', existingIndex)
       const result = switchTab(existingIndex)
       onSwitch(result)
       return
@@ -39,50 +36,29 @@ export function useTabs({ onSwitch, onSave }) {
     }
 
     const newTab = createTab(file, contentData)
-    console.log('[useTabs] 创建新标签:', newTab)
     openTabs.value.push(newTab)
-    console.log('[useTabs] openTabs 现在的数量:', openTabs.value.length)
 
     const newIndex = openTabs.value.length - 1
     activeTabIndex.value = newIndex
-    console.log('[useTabs] 调用 onSwitch，结果:', { needInit: true, tab: newTab, index: newIndex })
     onSwitch({ needInit: true, tab: newTab, index: newIndex })
 
     return newTab
   }
 
   const switchTab = (index) => {
-    console.log('[useTabs] switchTab 开始，索引:', index)
-    console.log('[useTabs] 当前 activeTabIndex:', activeTabIndex.value)
-    console.log('[useTabs] openTabs 长度:', openTabs.value.length)
-    console.log(
-      '[useTabs] openTabs 内容:',
-      openTabs.value.map((t) => ({ id: t.fileId, name: t.fileName, initialized: t.isInitialized }))
-    )
-
     if (index < 0 || index >= openTabs.value.length) {
-      console.log('[useTabs] 索引无效，返回 null')
       return { tab: null, index: -1 }
     }
     if (index === activeTabIndex.value) {
       const targetTab = openTabs.value[index]
-      console.log('[useTabs] 切换到相同标签，返回:', targetTab)
       return { tab: targetTab, index, needInit: false }
     }
 
     if (activeTabIndex.value >= 0) {
       const currentTab = openTabs.value[activeTabIndex.value]
-      console.log('[useTabs] 当前标签 (需要隐藏):', currentTab)
       if (currentTab?.vditorInstance) {
         const currentContainer = document.getElementById(currentTab.containerId)
-        console.log(
-          '[useTabs] 当前标签容器 ID:',
-          currentTab.containerId,
-          '存在:',
-          !!currentContainer
-        )
         if (currentContainer) {
-          console.log('[useTabs] 隐藏当前标签容器')
           currentContainer.style.display = 'none'
         }
       }
@@ -90,26 +66,16 @@ export function useTabs({ onSwitch, onSave }) {
 
     activeTabIndex.value = index
     const targetTab = openTabs.value[index]
-    console.log('[useTabs] 目标标签:', targetTab)
-    console.log('[useTabs] targetTab.isInitialized:', targetTab.isInitialized)
 
     if (!targetTab.isInitialized) {
-      console.log('[useTabs] 标签未初始化，需要初始化')
       return { needInit: true, tab: targetTab, index }
     } else {
       const targetContainer = document.getElementById(targetTab.containerId)
-      console.log('[useTabs] 目标标签容器 ID:', targetTab.containerId, '存在:', !!targetContainer)
       if (targetContainer) {
-        console.log('[useTabs] 显示目标标签容器，当前 display:', targetContainer.style.display)
         targetContainer.style.display = 'block'
       }
     }
 
-    console.log('[useTabs] switchTab 返回:', {
-      tab: targetTab,
-      index,
-      needInit: !targetTab.isInitialized
-    })
     return { tab: targetTab, index, needInit: !targetTab.isInitialized }
   }
 
@@ -150,9 +116,7 @@ export function useTabs({ onSwitch, onSave }) {
     if (tab.vditorInstance) {
       try {
         tab.vditorInstance.destroy()
-      } catch (error) {
-        console.warn('销毁 vditor 失败:', error)
-      }
+      } catch (error) {}
     }
 
     const container = document.getElementById(tab.containerId)
@@ -160,9 +124,9 @@ export function useTabs({ onSwitch, onSave }) {
       container.remove()
     }
 
-    if (saveTimers[tab.fileId]) {
-      clearTimeout(saveTimers[tab.fileId])
-      delete saveTimers[tab.fileId]
+    if (saveTimers.value[tab.fileId]) {
+      clearTimeout(saveTimers.value[tab.fileId])
+      delete saveTimers.value[tab.fileId]
     }
 
     openTabs.value.splice(index, 1)
@@ -206,9 +170,7 @@ export function useTabs({ onSwitch, onSave }) {
       if (tab.vditorInstance) {
         try {
           tab.vditorInstance.destroy()
-        } catch (error) {
-          console.warn('销毁 vditor 失败:', error)
-        }
+        } catch (error) {}
       }
 
       const container = document.getElementById(tab.containerId)
@@ -216,9 +178,9 @@ export function useTabs({ onSwitch, onSave }) {
         container.remove()
       }
 
-      if (saveTimers[tab.fileId]) {
-        clearTimeout(saveTimers[tab.fileId])
-        delete saveTimers[tab.fileId]
+      if (saveTimers.value[tab.fileId]) {
+        clearTimeout(saveTimers.value[tab.fileId])
+        delete saveTimers.value[tab.fileId]
       }
     }
 
@@ -250,9 +212,7 @@ export function useTabs({ onSwitch, onSave }) {
       if (tab.vditorInstance) {
         try {
           tab.vditorInstance.destroy()
-        } catch (error) {
-          console.warn('销毁 vditor 失败:', error)
-        }
+        } catch (error) {}
       }
 
       const container = document.getElementById(tab.containerId)
@@ -260,9 +220,9 @@ export function useTabs({ onSwitch, onSave }) {
         container.remove()
       }
 
-      if (saveTimers[tab.fileId]) {
-        clearTimeout(saveTimers[tab.fileId])
-        delete saveTimers[tab.fileId]
+      if (saveTimers.value[tab.fileId]) {
+        clearTimeout(saveTimers.value[tab.fileId])
+        delete saveTimers.value[tab.fileId]
       }
     }
 
@@ -299,11 +259,11 @@ export function useTabs({ onSwitch, onSave }) {
     const tab = getTabByFileId(fileId)
     if (!tab) return
 
-    if (saveTimers[fileId]) {
-      clearTimeout(saveTimers[fileId])
+    if (saveTimers.value[fileId]) {
+      clearTimeout(saveTimers.value[fileId])
     }
 
-    saveTimers[fileId] = setTimeout(() => {
+    saveTimers.value[fileId] = setTimeout(() => {
       saveFn(fileId)
     }, 1000)
   }

@@ -106,19 +106,14 @@ const {
 let initVditor = null
 
 const handleTabSwitch = (result) => {
-  console.log('[Workspace] handleTabSwitch 收到结果:', result)
   if (!result || !result.tab) {
-    console.log('[Workspace] result 或 result.tab 为空，返回')
     return
   }
 
   if (result.needInit && initVditor) {
-    console.log('[Workspace] 需要初始化编辑器')
     nextTick(() => {
       const tab = result.tab
-      console.log('[Workspace] nextTick 内，准备初始化 Vditor，tab:', tab)
       const vditorInstance = initVditor(tab, handleEditorInput)
-      console.log('[Workspace] initVditor 返回:', vditorInstance)
       if (vditorInstance) {
         tab.vditorInstance = vditorInstance
       }
@@ -126,7 +121,6 @@ const handleTabSwitch = (result) => {
   }
 
   currentFileId.value = result.tab.fileId
-  console.log('[Workspace] currentFileId 设置为:', result.tab.fileId)
   if (result.tab.content) {
     parseOutline(result.tab.content)
   }
@@ -307,23 +301,15 @@ const {
 // const jumpToSearchResult = () => {}
 
 const openFile = async (file) => {
-  console.log('[Workspace] openFile 开始:', file)
   try {
     const contentData = await loadFileContent(file.id)
-    console.log('[Workspace] 加载内容成功:', contentData)
     const tab = await openTab(file, contentData)
-    console.log('[Workspace] 创建标签返回:', tab)
     currentFileId.value = file.id
-    console.log('[Workspace] currentFileId 设置为:', file.id)
-  } catch (error) {
-    console.error('加载文件失败:', error)
-  }
+  } catch (error) {}
 }
 
 const handleSwitchTab = (index) => {
-  console.log('[Workspace] handleSwitchTab 被调用，索引:', index)
   const result = switchTab(index)
-  console.log('[Workspace] switchTab 返回:', result)
   handleTabSwitch(result)
 }
 

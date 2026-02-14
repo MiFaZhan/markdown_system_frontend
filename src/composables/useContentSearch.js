@@ -8,9 +8,7 @@ export function useContentSearch(options = {}) {
   const contentSearchResults = ref([])
 
   const searchInContent = async () => {
-    console.log('[useContentSearch] searchInContent called')
     const keyword = contentSearchKeyword.value.trim()
-    console.log('[useContentSearch] keyword:', keyword)
 
     if (!keyword) {
       contentSearchResults.value = []
@@ -18,13 +16,10 @@ export function useContentSearch(options = {}) {
     }
 
     const nodeId = getCurrentFileId?.()
-    console.log('[useContentSearch] nodeId:', nodeId)
     if (!nodeId) return
 
     try {
-      console.log('[useContentSearch] calling searchContentInFile API')
       const response = await searchContentInFile(nodeId, keyword)
-      console.log('[useContentSearch] API response:', response)
       contentSearchResults.value = response.map((item) => ({
         nodeId: item.nodeId,
         nodeName: item.nodeName,
@@ -33,16 +28,12 @@ export function useContentSearch(options = {}) {
         text: item.matchedText || '(空行)',
         matchCount: item.matchCount
       }))
-      console.log('[useContentSearch] contentSearchResults updated:', contentSearchResults.value)
     } catch (error) {
-      console.error('[useContentSearch] 搜索出错:', error)
       contentSearchResults.value = []
     }
   }
 
   const jumpToSearchResult = async (result) => {
-    console.log('[useContentSearch] jumpToSearchResult, line:', result.line, 'text:', result.text)
-
     const currentFileId = getCurrentFileId?.()
     if (result.nodeId && result.nodeId !== currentFileId) {
       await onSelectFile?.({ id: result.nodeId, nodeName: result.nodeName })
@@ -59,10 +50,6 @@ export function useContentSearch(options = {}) {
     const keyword = contentSearchKeyword.value.trim()
     const targetLine = result.line
     const matchedText = result.text?.trim() || ''
-
-    console.log('[useContentSearch] 目标行:', targetLine)
-    console.log('[useContentSearch] 后端返回文本:', matchedText)
-    console.log('[useContentSearch] 关键词:', keyword)
 
     const markdownContent = vditorInstance.getValue()
     const totalLines = markdownContent.split('\n').length
@@ -121,7 +108,6 @@ export function useContentSearch(options = {}) {
     candidates.sort((a, b) => b.score - a.score)
 
     if (candidates.length === 0) {
-      console.log('[useContentSearch] 未找到匹配节点，尝试全文搜索')
       const walker2 = document.createTreeWalker(irElement, NodeFilter.SHOW_TEXT, null, false)
       while (walker2.nextNode()) {
         const node = walker2.currentNode
@@ -133,19 +119,11 @@ export function useContentSearch(options = {}) {
     }
 
     if (candidates.length === 0) {
-      console.log('[useContentSearch] 未找到任何匹配节点')
       return
     }
 
     const bestMatch = candidates[0]
     const targetNode = bestMatch.node
-
-    console.log(
-      '[useContentSearch] 最佳匹配节点:',
-      bestMatch.text.substring(0, 80),
-      '分数:',
-      bestMatch.score
-    )
 
     highlightNode(targetNode, keyword)
   }
@@ -163,7 +141,6 @@ export function useContentSearch(options = {}) {
     const keywordStart = nodeText.toLowerCase().indexOf(keyword.toLowerCase())
 
     if (keywordStart === -1) {
-      console.log('[useContentSearch] 节点中未找到关键词')
       return
     }
 
@@ -182,8 +159,6 @@ export function useContentSearch(options = {}) {
       range.surroundContents(mark)
       mark.scrollIntoView({ behavior: 'smooth', block: 'center' })
 
-      console.log('[useContentSearch] 高亮完成')
-
       setTimeout(() => {
         if (mark.parentElement) {
           const parent = mark.parentElement
@@ -191,9 +166,7 @@ export function useContentSearch(options = {}) {
           parent.removeChild(mark)
         }
       }, 3000)
-    } catch (error) {
-      console.error('[useContentSearch] 高亮失败:', error)
-    }
+    } catch (error) {}
   }
 
   const calculateSimilarity = (str1, str2) => {
@@ -211,7 +184,6 @@ export function useContentSearch(options = {}) {
   }
 
   watch(contentSearchKeyword, (newValue) => {
-    console.log('[useContentSearch] contentSearchKeyword changed, newValue:', newValue)
     searchInContent()
   })
 

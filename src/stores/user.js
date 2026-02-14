@@ -6,8 +6,8 @@ export const useUserStore = defineStore('user', () => {
   const token = ref(localStorage.getItem('token') || '')
   const userInfo = ref(null)
 
-  async function login(username, password) {
-    const data = await userService.login({ username, password })
+  async function login(account, password) {
+    const data = await userService.login({ account, password })
     token.value = data.token
     userInfo.value = data
     localStorage.setItem('token', data.token)
