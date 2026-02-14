@@ -66,8 +66,88 @@
   --el-fill-color-blank: var(--vt-c-white);
 }
 
+/* 深色模式 - 支持手动切换和跟随系统 */
+[data-theme='dark'] {
+  /* Dark Reader 风格 - 温暖的深色背景 */
+  --color-background: var(--dr-bg-primary);
+  --color-background-soft: var(--dr-bg-secondary);
+  --color-background-mute: var(--dr-bg-tertiary);
+
+  --color-border: var(--dr-border);
+  --color-border-hover: var(--dr-border-light);
+
+  --color-heading: var(--dr-text-primary);
+  --color-text: var(--dr-text-primary);
+  --color-text-secondary: var(--dr-text-secondary);
+
+  /* Element Plus Dark Reader 风格适配 */
+  --el-bg-color: var(--dr-bg-secondary);
+  --el-bg-color-page: var(--dr-bg-primary);
+  --el-bg-color-overlay: var(--dr-bg-elevated);
+  --el-text-color-primary: var(--dr-text-primary);
+  --el-text-color-regular: var(--dr-text-primary);
+  --el-text-color-secondary: var(--dr-text-secondary);
+  --el-text-color-placeholder: var(--dr-text-muted);
+  --el-border-color: var(--dr-border-light);
+  --el-border-color-light: var(--dr-border);
+  --el-border-color-lighter: #353839;
+  --el-border-color-extra-light: #2d2f30;
+  --el-fill-color: var(--dr-bg-tertiary);
+  --el-fill-color-light: var(--dr-bg-secondary);
+  --el-fill-color-lighter: var(--dr-bg-primary);
+  --el-fill-color-blank: var(--dr-bg-secondary);
+  --el-color-white: var(--dr-bg-secondary);
+  --el-mask-color: rgba(0, 0, 0, 0.75);
+
+  /* 主色调适配 */
+  --el-color-primary: var(--dr-accent);
+  --el-color-primary-light-3: #4a7fd9;
+  --el-color-primary-light-5: #3d6bb8;
+  --el-color-primary-light-7: #2f5797;
+  --el-color-primary-light-9: #223f6e;
+  --el-color-primary-dark-2: var(--dr-accent-hover);
+  --color-primary: var(--dr-accent);
+
+  /* 表格 Dark Reader 风格 */
+  --el-table-bg-color: var(--dr-bg-secondary);
+  --el-table-tr-bg-color: var(--dr-bg-secondary);
+  --el-table-header-bg-color: var(--dr-bg-tertiary);
+  --el-table-row-hover-bg-color: var(--dr-bg-hover);
+  --el-table-border-color: var(--dr-border);
+  --el-table-text-color: var(--dr-text-primary);
+
+  /* 卡片 Dark Reader 风格 */
+  --el-card-bg-color: var(--dr-bg-secondary);
+
+  /* 输入框 Dark Reader 风格 */
+  --el-input-bg-color: var(--dr-bg-tertiary);
+  --el-input-text-color: var(--dr-text-primary);
+  --el-input-border-color: var(--dr-border);
+
+  /* 按钮 Dark Reader 风格 */
+  --el-button-bg-color: var(--dr-bg-tertiary);
+  --el-button-text-color: var(--dr-text-primary);
+  --el-button-hover-bg-color: var(--dr-bg-hover);
+  --el-button-border-color: var(--dr-border);
+
+  /* 对话框 Dark Reader 风格 */
+  --el-dialog-bg-color: var(--dr-bg-secondary);
+  --el-dialog-box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+
+  /* 下拉菜单 Dark Reader 风格 */
+  --el-dropdown-menu-bg-color: var(--dr-bg-elevated);
+  --el-dropdown-menu-border-color: var(--dr-border);
+
+  /* 消息提示 Dark Reader 风格 */
+  --el-message-bg-color: var(--dr-bg-elevated);
+  --el-message-border-color: var(--dr-border);
+
+  /* 树形控件 Dark Reader 风格 */
+  --el-tree-node-hover-bg-color: var(--dr-bg-hover);
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     /* Dark Reader 风格 - 温暖的深色背景 */
     --color-background: var(--dr-bg-primary);
     --color-background-soft: var(--dr-bg-secondary);
@@ -184,7 +264,7 @@ body {
 /* ========================================
    Dark Reader 风格深色模式全局样式
    ======================================== */
-@media (prefers-color-scheme: dark) {
+[data-theme='dark'] {
   /* 滚动条 Dark Reader 风格 */
   ::-webkit-scrollbar {
     width: 10px;

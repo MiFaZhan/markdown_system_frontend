@@ -1,5 +1,5 @@
 <template>
-  <div class="login-wrapper">
+  <div class="login-wrapper" @keyup.enter="handleLogin">
     <el-card class="login-card">
       <template #header>
         <div class="card-header">
@@ -8,7 +8,7 @@
       </template>
       <el-form :model="form" label-width="0">
         <el-form-item>
-          <el-input v-model="form.account" placeholder="请输入用户名或邮箱" :prefix-icon="User" />
+          <el-input v-model="form.account" placeholder="请输入用户名或邮箱" :prefix-icon="User" @keyup.enter="handleLogin" />
         </el-form-item>
         <el-form-item>
           <el-input
@@ -17,6 +17,7 @@
             placeholder="请输入密码"
             :prefix-icon="Lock"
             show-password
+            @keyup.enter="handleLogin"
           />
         </el-form-item>
         <el-form-item>

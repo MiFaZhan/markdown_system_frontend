@@ -30,7 +30,7 @@ const router = createRouter({
 })
 
 // 路由守卫：未登录跳转到登录页
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
 
   // 已登录用户访问登录页，重定向到项目列表页
@@ -43,6 +43,18 @@ router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth && !userStore.token) {
     next('/login')
     return
+  }
+
+  // 如果有token但没有用户信息，尝试获取用户信息
+  if (userStore.token && !userStore.userInfo) {
+    try {
+      await userStore.fetchUserInfo()
+    } catch (error) {
+      // 获取用户信息失败，清除token并跳转到登录页
+      userStore.logout()
+      next('/login')
+      return
+    }
   }
 
   next()
