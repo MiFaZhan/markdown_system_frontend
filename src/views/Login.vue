@@ -8,13 +8,13 @@
       </template>
       <el-form :model="form" label-width="0">
         <el-form-item>
-          <el-input v-model="form.username" placeholder="用户名 (admin)" :prefix-icon="User" />
+          <el-input v-model="form.username" placeholder="请输入用户名" :prefix-icon="User" />
         </el-form-item>
         <el-form-item>
           <el-input
             v-model="form.password"
             type="password"
-            placeholder="密码 (123456)"
+            placeholder="请输入密码"
             :prefix-icon="Lock"
             show-password
           />
@@ -25,7 +25,6 @@
           >
         </el-form-item>
       </el-form>
-      <div class="tips">提示: admin / 123456</div>
     </el-card>
   </div>
 </template>

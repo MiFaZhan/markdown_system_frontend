@@ -1,13 +1,13 @@
 // HTTP请求封装
-import { ElMessage } from 'element-plus'
-
 const BASE_URL = 'http://localhost:8080/api'
 
 // 通用请求函数
 async function request(url, options = {}) {
+  const token = localStorage.getItem('token')
   const config = {
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
       ...options.headers
     },
     ...options
@@ -35,7 +35,6 @@ async function request(url, options = {}) {
     return data.data
   } catch (error) {
     console.error('API请求失败:', error)
-    ElMessage.error(error.message || '网络请求失败')
     throw error
   }
 }

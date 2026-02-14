@@ -1,27 +1,30 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import * as userService from '../api/userService'
 
 export const useUserStore = defineStore('user', () => {
   const token = ref(localStorage.getItem('token') || '')
+  const userInfo = ref(null)
 
-  function login(username, password) {
-    // 模拟登录验证
-    return new Promise((resolve, reject) => {
-      if (username === 'admin' && password === '123456') {
-        token.value = 'mock-token-123456'
-        localStorage.setItem('token', token.value)
-        resolve()
-      } else {
-        reject('用户名或密码错误 (admin/123456)')
-      }
-    })
+  async function login(username, password) {
+    const data = await userService.login({ username, password })
+    token.value = data.token
+    userInfo.value = data
+    localStorage.setItem('token', data.token)
+  }
+
+  async function fetchUserInfo() {
+    if (!token.value) return
+    const data = await userService.getUserInfo()
+    userInfo.value = data
   }
 
   function logout() {
     token.value = ''
+    userInfo.value = null
     localStorage.removeItem('token')
     window.location.href = '/login'
   }
 
-  return { token, login, logout }
+  return { token, userInfo, login, fetchUserInfo, logout }
 })
