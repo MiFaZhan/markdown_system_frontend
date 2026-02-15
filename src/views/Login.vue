@@ -1,5 +1,5 @@
 <template>
-  <div class="login-wrapper" @keyup.enter="handleLogin">
+  <div class="login-wrapper">
     <el-card class="login-card">
       <template #header>
         <div class="card-header">
@@ -8,7 +8,7 @@
       </template>
       <el-form :model="form" label-width="0">
         <el-form-item>
-          <el-input v-model="form.account" placeholder="请输入用户名或邮箱" :prefix-icon="User" @keyup.enter="handleLogin" />
+          <el-input v-model="form.account" placeholder="请输入用户名或邮箱" :prefix-icon="User" />
         </el-form-item>
         <el-form-item>
           <el-input
@@ -55,7 +55,7 @@ const handleLogin = async () => {
     ElMessage.success('登录成功')
     router.push('/index')
   } catch (error) {
-    ElMessage.error(error)
+    ElMessage.error(error.message || '登录失败')
   } finally {
     loading.value = false
   }

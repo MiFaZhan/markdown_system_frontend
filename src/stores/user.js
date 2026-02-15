@@ -29,7 +29,7 @@ export const useUserStore = defineStore('user', () => {
 
   function getRoleById(roleId) {
     if (!roleList.value) return null
-    return roleList.value.find(role => role.roleId === roleId)
+    return roleList.value.find((role) => role.roleId === roleId)
   }
 
   function getRoleName(roleId) {
@@ -45,5 +45,15 @@ export const useUserStore = defineStore('user', () => {
     window.location.href = '/login'
   }
 
-  return { token, userInfo, roleList, login, fetchUserInfo, fetchRoleList, getRoleById, getRoleName, logout }
+  return {
+    token,
+    userInfo,
+    roleList,
+    login,
+    fetchUserInfo,
+    fetchRoleList,
+    getRoleById,
+    getRoleName,
+    logout
+  }
 })

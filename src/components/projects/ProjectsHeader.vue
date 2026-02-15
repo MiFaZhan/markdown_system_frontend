@@ -5,17 +5,17 @@
     </div>
     <div class="header-right">
       <el-tooltip :content="themeStore.getThemeTooltip()" placement="bottom">
-        <button class="theme-toggle-btn" @click="handleThemeToggle" aria-label="切换主题">
+        <button class="theme-toggle-btn" aria-label="切换主题" @click="handleThemeToggle">
           <component :is="themeIconComponent" class="theme-icon" />
         </button>
       </el-tooltip>
-      
-      <el-dropdown 
+
+      <el-dropdown
         ref="dropdownRef"
-        @command="handleCommand" 
         placement="bottom-end"
         :hide-on-click="true"
         trigger="click"
+        @command="handleCommand"
       >
         <div class="user-avatar-container">
           <el-avatar :size="40" :icon="UserFilled" class="user-avatar" />
@@ -30,9 +30,9 @@
                 <span>个人资料</span>
               </div>
             </el-dropdown-item>
-            <el-dropdown-item command="settings">
+            <el-dropdown-item v-if="userStore.userInfo?.roleId === 1" command="userManagement">
               <div class="dropdown-item-content">
-                <span>系统设置</span>
+                <span>用户管理</span>
               </div>
             </el-dropdown-item>
             <el-dropdown-item divided command="logout">
@@ -73,10 +73,10 @@
               {{ getStatusText(displayUserInfo.status) }}
             </el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="权限" v-if="userStore.getRoleById(displayUserInfo.roleId)">
+          <el-descriptions-item v-if="userStore.getRoleById(displayUserInfo.roleId)" label="权限">
             <div class="permissions-tags">
-              <el-tag 
-                v-for="permission in userStore.getRoleById(displayUserInfo.roleId).permissions" 
+              <el-tag
+                v-for="permission in userStore.getRoleById(displayUserInfo.roleId).permissions"
                 :key="permission"
                 type="info"
                 size="small"
@@ -84,12 +84,15 @@
               >
                 {{ translatePermission(permission) }}
               </el-tag>
-              <span v-if="!userStore.getRoleById(displayUserInfo.roleId).permissions?.length" class="no-permissions">
+              <span
+                v-if="!userStore.getRoleById(displayUserInfo.roleId).permissions?.length"
+                class="no-permissions"
+              >
                 暂无权限
               </span>
             </div>
           </el-descriptions-item>
-          <el-descriptions-item label="描述" v-if="displayUserInfo.description">
+          <el-descriptions-item v-if="displayUserInfo.description" label="描述">
             {{ displayUserInfo.description }}
           </el-descriptions-item>
         </el-descriptions>
@@ -101,6 +104,8 @@
         <span>加载中...</span>
       </div>
     </el-dialog>
+
+    <UserManagementDialog v-model="userManagementVisible" />
   </header>
 </template>
 
@@ -110,11 +115,13 @@ import { useUserStore } from '../../stores/user'
 import { useThemeStore } from '../../stores/theme'
 import { UserFilled, Loading, Sunny, Moon, Monitor } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
+import UserManagementDialog from './UserManagementDialog.vue'
 
 const userStore = useUserStore()
 const themeStore = useThemeStore()
 const dropdownRef = ref(null)
 const profileDialogVisible = ref(false)
+const userManagementVisible = ref(false)
 const displayUserInfo = ref(null)
 
 const themeIconComponent = computed(() => {
@@ -139,8 +146,8 @@ function handleCommand(command) {
     case 'profile':
       handleShowProfile()
       break
-    case 'settings':
-      ElMessage.info('系统设置功能开发中...')
+    case 'userManagement':
+      userManagementVisible.value = true
       break
     case 'logout':
       userStore.logout()
@@ -150,16 +157,16 @@ function handleCommand(command) {
 
 async function handleShowProfile() {
   profileDialogVisible.value = true
-  
+
   try {
     if (!userStore.userInfo) {
       await userStore.fetchUserInfo()
     }
-    
+
     if (!userStore.roleList) {
       await userStore.fetchRoleList()
     }
-    
+
     displayUserInfo.value = userStore.userInfo
   } catch (error) {
     ElMessage.error('获取信息失败')
@@ -288,7 +295,9 @@ onUnmounted(() => {
 
 .user-avatar {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .user-avatar:hover {
@@ -442,7 +451,8 @@ onUnmounted(() => {
     background: rgba(217, 100, 89, 0.15) !important;
   }
 
-  .custom-dropdown-menu :deep(.el-dropdown-menu__item.logout-item:hover .dropdown-item-content span) {
+  .custom-dropdown-menu
+    :deep(.el-dropdown-menu__item.logout-item:hover .dropdown-item-content span) {
     color: var(--dr-danger-hover) !important;
   }
 }

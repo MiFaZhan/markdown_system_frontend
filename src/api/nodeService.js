@@ -31,3 +31,15 @@ export function uploadMarkdownFile(file, projectId, parentId) {
 
   return post('/node/upload', formData)
 }
+
+export function getRecycleBinTree(projectId) {
+  return get(`/node/recycle-bin/${projectId}`)
+}
+
+export function restoreNode(nodeId) {
+  return put(`/node/restore/${nodeId}`)
+}
+
+export function physicalDeleteNode(nodeId) {
+  return del(`/node/physical/${nodeId}`)
+}

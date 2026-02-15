@@ -1,7 +1,7 @@
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { createNode, updateNode, deleteNode, uploadMarkdownFile } from '../api/nodeService'
 
-export function useFileOperations({ onRefresh, onCloseTab }) {
+export function useFileOperations({ onRefresh, onCloseTab, onOpenFile }) {
   const handleCreate = async (command, currentProjectId) => {
     if (!currentProjectId) {
       ElMessage.error('项目ID不存在，无法创建文件')
@@ -87,11 +87,12 @@ export function useFileOperations({ onRefresh, onCloseTab }) {
       }
 
       try {
-        const result = await uploadMarkdownFile(file, currentProjectId)
+        await uploadMarkdownFile(file, currentProjectId)
 
         if (onRefresh) {
           await onRefresh()
         }
+
         ElMessage.success('上传成功')
       } catch (error) {
         ElMessage.error(error.message || '上传失败')
@@ -214,13 +215,14 @@ export function useFileOperations({ onRefresh, onCloseTab }) {
     return true
   }
 
-  const handleDrop = async (draggingNode, dropNode, dropType) => {
+  const handleDrop = async (draggingNode, dropNode, dropType, event) => {
     let parentId
+    let originalParentId = draggingNode.data.parentId
 
     if (dropType === 'inner') {
       if (dropNode.data.type !== 'folder') {
         ElMessage.warning('只能拖到文件夹中')
-        return
+        return false
       }
       parentId = dropNode.data.id
     } else if (dropType === 'before' || dropType === 'after') {
@@ -229,7 +231,7 @@ export function useFileOperations({ onRefresh, onCloseTab }) {
         parentId = 0
       }
     } else {
-      return
+      return false
     }
 
     try {
@@ -241,12 +243,15 @@ export function useFileOperations({ onRefresh, onCloseTab }) {
 
       await updateNode(nodeData)
 
+      ElMessage.success('移动成功')
+      return true
+    } catch (error) {
+      ElMessage.error('移动失败')
+      return false
+    } finally {
       if (onRefresh) {
         await onRefresh()
       }
-      ElMessage.success('移动成功')
-    } catch (error) {
-      ElMessage.error('移动失败')
     }
   }
 

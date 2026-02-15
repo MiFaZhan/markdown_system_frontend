@@ -1,5 +1,6 @@
 // 项目相关API
 import { get, post, put, del } from './request'
+import { useUserStore } from '@/stores/user'
 
 /**
  * 分页查询项目列表
@@ -50,11 +51,12 @@ export function getProject(projectId) {
  * @param {string} projectData.icon - 项目图标
  */
 export function createProject(projectData) {
+  const userStore = useUserStore()
   return post('/project', {
     projectName: projectData.name,
     description: projectData.description,
     icon: projectData.icon,
-    userId: 1 // 临时固定用户ID，后续从用户store获取
+    userId: userStore.userInfo?.userId
   })
 }
 

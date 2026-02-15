@@ -57,7 +57,8 @@
         :allow-drag="allowDrag"
         :expand-on-click-node="false"
         @node-click="selectFile"
-        @node-drop="emit('drop', ...arguments)"
+        @node-drag-start="handleDragStart"
+        @node-drop="handleNodeDrop"
       >
         <template #default="{ node, data }">
           <div class="tree-node" :class="{ active: selectedNodeId === data.id }">
@@ -86,35 +87,82 @@
       </el-tree>
     </div>
 
+    <div class="recycle-bin-bar" @click="showRecycleBin = true">
+      <el-icon><Delete /></el-icon>
+      <span>回收站</span>
+    </div>
+
     <div
       class="resize-handle resize-handle-right"
       @mousedown="emit('start-resize', 'sidebar', $event)"
     ></div>
+
+    <RecycleBinDialog
+      v-model:visible="showRecycleBin"
+      :project-id="projectId"
+      @restore="emit('refresh')"
+    />
   </aside>
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import {
   Plus,
+  Back,
   Document,
   Folder,
-  Setting,
+  Upload,
   Search,
-  Back,
   FolderOpened,
-  Upload
+  Setting,
+  Delete
 } from '@element-plus/icons-vue'
+import RecycleBinDialog from './RecycleBinDialog.vue'
+
+const showRecycleBin = ref(false)
 
 const props = defineProps({
-  show: Boolean,
-  isMobile: Boolean,
-  width: Number,
-  projectName: String,
-  fileTree: Array,
-  searchKeyword: String,
-  filteredFileTree: Array,
-  searchResultCount: Number,
-  selectedNodeId: Number,
+  show: {
+    type: Boolean,
+    default: true
+  },
+  width: {
+    type: Number,
+    default: 250
+  },
+  isMobile: {
+    type: Boolean,
+    default: false
+  },
+  projectName: {
+    type: String,
+    default: ''
+  },
+  searchKeyword: {
+    type: String,
+    default: ''
+  },
+  searchResultCount: {
+    type: Number,
+    default: 0
+  },
+  fileTree: {
+    type: Array,
+    default: () => []
+  },
+  filteredFileTree: {
+    type: Array,
+    default: () => []
+  },
+  selectedNodeId: {
+    type: [Number, String],
+    default: null
+  },
+  projectId: {
+    type: [Number, String],
+    default: null
+  },
   allowDrop: Function,
   allowDrag: Function,
   treeRef: Object
@@ -127,8 +175,22 @@ const emit = defineEmits([
   'node-command',
   'drop',
   'start-resize',
-  'update:searchKeyword'
+  'update:searchKeyword',
+  'refresh'
 ])
+
+const handleDragStart = (node, event) => {
+  // 拖动开始时的处理
+}
+
+const handleNodeDrop = async (draggingNode, dropNode, dropType, event) => {
+  const success = await emit('drop', draggingNode, dropNode, dropType, event)
+
+  if (success === false) {
+    event.stopPropagation()
+    event.preventDefault()
+  }
+}
 
 const selectFile = (file) => {
   if (file.type !== 'folder') {
@@ -209,6 +271,23 @@ const selectFile = (file) => {
   flex: 1;
   overflow-y: auto;
   padding: 0 8px;
+}
+
+.recycle-bin-bar {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  border-top: 1px solid var(--color-border);
+  color: var(--el-text-color-regular);
+  transition: all 0.3s;
+}
+
+.recycle-bin-bar:hover {
+  background-color: var(--color-background-mute);
+  color: var(--el-color-primary);
 }
 
 .empty-files {
