@@ -95,6 +95,11 @@ watch(
   () => props.visible,
   (newVal) => {
     if (newVal && !props.editingProject) {
+      projectForm.value = {
+        name: '',
+        icon: '📁',
+        description: ''
+      }
       nextTick(() => {
         formRef.value?.clearValidate()
       })

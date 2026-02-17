@@ -86,7 +86,7 @@
         <el-form-item label="角色" prop="roleId">
           <el-select v-model="formData.roleId" placeholder="选择角色" style="width: 100%">
             <el-option
-              v-for="role in roles"
+              v-for="role in selectableRoles"
               :key="role.roleId"
               :label="role.roleName"
               :value="role.roleId"
@@ -137,7 +137,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch } from 'vue'
+import { ref, reactive, watch, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { listUsers, register, updateUser, deleteUser } from '../../api/userService'
 import { getRoleList } from '../../api/roleService'
@@ -159,6 +159,7 @@ const currentPage = ref(1)
 const pageSize = ref(10)
 const searchKeyword = ref('')
 const roles = ref([])
+const selectableRoles = computed(() => roles.value.filter((role) => role.roleCode !== 'guest'))
 
 // Form State
 const formVisible = ref(false)

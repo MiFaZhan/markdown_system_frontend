@@ -84,3 +84,35 @@ export function updateProject(projectData) {
 export function deleteProject(projectId) {
   return del('/project', { projectId })
 }
+
+/**
+ * 查询回收站项目列表
+ * @param {Object} params - 查询参数
+ * @param {string} params.keyword - 关键字
+ * @param {string} params.sortField - 排序字段，creation_time/update_time/project_name
+ * @param {string} params.sortOrder - 排序方向，asc/desc
+ */
+export function getRecycleBinProjects(params = {}) {
+  const defaultParams = {
+    keyword: '',
+    sortField: 'creation_time',
+    sortOrder: 'asc'
+  }
+  return get('/project/recycle-bin', { ...defaultParams, ...params })
+}
+
+/**
+ * 恢复项目
+ * @param {number} projectId - 项目ID
+ */
+export function restoreProject(projectId) {
+  return put(`/project/restore/${projectId}`)
+}
+
+/**
+ * 彻底删除项目
+ * @param {number} projectId - 项目ID
+ */
+export function physicalDeleteProject(projectId) {
+  return del(`/project/physical/${projectId}`)
+}

@@ -13,12 +13,16 @@ export const useUserStore = defineStore('user', () => {
     token.value = data.token
     userInfo.value = data
     localStorage.setItem('token', data.token)
+    await fetchRoleList()
   }
 
   async function fetchUserInfo() {
     if (!token.value) return
     const data = await userService.getUserInfo()
     userInfo.value = data
+    if (!roleList.value) {
+      await fetchRoleList()
+    }
   }
 
   async function fetchRoleList() {

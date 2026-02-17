@@ -167,7 +167,7 @@ const openFile = async (file) => {
       '内容长度:',
       contentData?.content?.length || 0
     )
-    const tab = await openTab(file, contentData)
+    const tab = await openTab(file, contentData, currentProjectId.value)
     console.log('[Outline] 标签页已打开:', file.id, 'tab:', tab)
     currentFileId.value = file.id
   } catch (error) {

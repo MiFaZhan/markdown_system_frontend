@@ -6,9 +6,10 @@ export function useTabs({ onSwitch, onSave }) {
   const activeTabIndex = ref(-1)
   const saveTimers = ref({})
 
-  const createTab = (file, contentData) => {
+  const createTab = (file, contentData, projectId) => {
     return {
       fileId: file.id,
+      projectId: projectId,
       fileName: file.name,
       content: contentData.content || '',
       version: contentData.version,
@@ -22,7 +23,7 @@ export function useTabs({ onSwitch, onSave }) {
     }
   }
 
-  const openTab = async (file, contentData) => {
+  const openTab = async (file, contentData, projectId) => {
     const existingIndex = openTabs.value.findIndex((tab) => tab.fileId === file.id)
     if (existingIndex !== -1) {
       const result = switchTab(existingIndex)
@@ -35,7 +36,7 @@ export function useTabs({ onSwitch, onSave }) {
       return
     }
 
-    const newTab = createTab(file, contentData)
+    const newTab = createTab(file, contentData, projectId)
     openTabs.value.push(newTab)
 
     const newIndex = openTabs.value.length - 1

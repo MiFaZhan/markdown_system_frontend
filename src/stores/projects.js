@@ -6,6 +6,8 @@ import * as projectService from '../api/projectService'
 export const useProjectsStore = defineStore('projects', () => {
   const projectList = ref([])
   const loading = ref(false)
+  const recycleBinList = ref([])
+  const recycleLoading = ref(false)
   const sortConfig = ref({
     field: 'creation_time',
     order: 'asc'
@@ -92,6 +94,53 @@ export const useProjectsStore = defineStore('projects', () => {
     }
   }
 
+  // 回收站：获取已删除项目列表
+  async function fetchRecycleBinProjects(params = {}) {
+    recycleLoading.value = true
+    try {
+      const queryParams = {
+        keyword: params.keyword || '',
+        sortField: params.sortField || sortConfig.value.field,
+        sortOrder: params.sortOrder || sortConfig.value.order
+      }
+      const result = await projectService.getRecycleBinProjects(queryParams)
+      recycleBinList.value = result.map((project) => ({
+        id: project.projectId,
+        name: project.projectName,
+        description: project.description,
+        icon: project.icon || '📁',
+        updateTime: project.updateTime,
+        creationTime: project.creationTime
+      }))
+      return result
+    } catch (error) {
+      ElMessage.error('获取回收站项目失败')
+    } finally {
+      recycleLoading.value = false
+    }
+  }
+
+  // 回收站：恢复项目
+  async function restoreProject(projectId) {
+    try {
+      await projectService.restoreProject(projectId)
+      await fetchRecycleBinProjects()
+      await fetchProjects()
+    } catch (error) {
+      throw error
+    }
+  }
+
+  // 回收站：彻底删除项目
+  async function physicalDeleteProject(projectId) {
+    try {
+      await projectService.physicalDeleteProject(projectId)
+      await fetchRecycleBinProjects()
+    } catch (error) {
+      throw error
+    }
+  }
+
   // 设置排序
   function setSortConfig(field, order, keyword = '') {
     sortConfig.value = { field, order }
@@ -130,12 +179,17 @@ export const useProjectsStore = defineStore('projects', () => {
   return {
     projectList,
     loading,
+    recycleBinList,
+    recycleLoading,
     sortConfig,
     currentProjectId,
     fetchProjects,
+    fetchRecycleBinProjects,
     createProject,
     updateProject,
     deleteProject,
+    restoreProject,
+    physicalDeleteProject,
     setSortConfig,
     setCurrentProject,
     findProjectByName,

@@ -155,7 +155,7 @@ function handleCommand(command) {
   }
 }
 
-async function handleShowProfile() {
+  async function handleShowProfile() {
   profileDialogVisible.value = true
 
   try {
@@ -166,8 +166,9 @@ async function handleShowProfile() {
     if (!userStore.roleList) {
       await userStore.fetchRoleList()
     }
-
-    displayUserInfo.value = userStore.userInfo
+    
+    // 强制重新赋值以触发响应式更新
+    displayUserInfo.value = { ...userStore.userInfo }
   } catch (error) {
     ElMessage.error('获取信息失败')
     profileDialogVisible.value = false
