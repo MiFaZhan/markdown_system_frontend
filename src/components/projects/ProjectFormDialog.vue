@@ -10,15 +10,22 @@
         <el-input v-model="projectForm.name" placeholder="请输入项目名称" />
       </el-form-item>
       <el-form-item label="项目图标">
-        <div class="icon-selector">
-          <div
-            v-for="icon in iconList"
-            :key="icon"
-            class="icon-option"
-            :class="{ active: projectForm.icon === icon }"
-            @click="projectForm.icon = icon"
-          >
-            {{ icon }}
+        <div class="icon-form-item">
+          <el-input
+            v-model="projectForm.icon"
+            placeholder="请输入项目图标（支持 Emoji 表情）"
+          />
+          <div class="icon-hint">项目图标支持使用任意 Emoji 表情</div>
+          <div class="icon-selector">
+            <div
+              v-for="icon in iconList"
+              :key="icon"
+              class="icon-option"
+              :class="{ active: projectForm.icon === icon }"
+              @click="projectForm.icon = icon"
+            >
+              {{ icon }}
+            </div>
           </div>
         </div>
       </el-form-item>
@@ -118,6 +125,17 @@ async function handleSave() {
 </script>
 
 <style scoped>
+.icon-form-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.icon-hint {
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+}
+
 .icon-selector {
   display: grid;
   grid-template-columns: repeat(6, 1fr);
