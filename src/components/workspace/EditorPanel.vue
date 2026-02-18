@@ -5,6 +5,7 @@
       :active-index="activeIndex"
       :show-sidebar="showSidebar"
       :show-outline="showOutline"
+      :is-mobile="isMobile"
       @switch-tab="emit('switch-tab', $event)"
       @close-tab="emit('close-tab', $event)"
       @close-others="emit('close-others', $event)"
@@ -33,7 +34,8 @@ const props = defineProps({
   tabs: Array,
   activeIndex: Number,
   showSidebar: Boolean,
-  showOutline: Boolean
+  showOutline: Boolean,
+  isMobile: Boolean
 })
 
 const emit = defineEmits([

@@ -33,6 +33,7 @@
       :project="project"
       @click="$emit('enterProject', project)"
       @edit="$emit('editProject', project)"
+      @share="$emit('shareProject', project)"
       @delete="$emit('deleteProject', project)"
       @view="$emit('viewProperty', project)"
     />
@@ -62,7 +63,14 @@ defineProps({
   }
 })
 
-defineEmits(['enterProject', 'editProject', 'deleteProject', 'viewProperty', 'handleListSort'])
+defineEmits([
+  'enterProject',
+  'editProject',
+  'shareProject',
+  'deleteProject',
+  'viewProperty',
+  'handleListSort'
+])
 </script>
 
 <style scoped>
@@ -138,6 +146,19 @@ defineEmits(['enterProject', 'editProject', 'deleteProject', 'viewProperty', 'ha
     grid-template-columns: 40px 1fr 130px 130px 50px;
   }
 
+  .header-desc {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .projects-list-header {
+    grid-template-columns: 40px 1fr 50px;
+    padding: 12px 16px;
+  }
+
+  .header-date,
+  .header-update,
   .header-desc {
     display: none;
   }

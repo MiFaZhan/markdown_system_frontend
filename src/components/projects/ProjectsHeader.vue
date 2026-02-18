@@ -62,8 +62,8 @@
           <el-descriptions-item label="用户名">
             {{ displayUserInfo.username }}
           </el-descriptions-item>
-          <el-descriptions-item label="邮箱">
-            {{ displayUserInfo.email || '-' }}
+          <el-descriptions-item label="邮箱" class="email-item">
+            <span class="email-text">{{ displayUserInfo.email || '-' }}</span>
           </el-descriptions-item>
           <el-descriptions-item label="角色">
             {{ userStore.getRoleName(displayUserInfo.roleId) }}
@@ -155,7 +155,7 @@ function handleCommand(command) {
   }
 }
 
-  async function handleShowProfile() {
+async function handleShowProfile() {
   profileDialogVisible.value = true
 
   try {
@@ -166,7 +166,7 @@ function handleCommand(command) {
     if (!userStore.roleList) {
       await userStore.fetchRoleList()
     }
-    
+
     // 强制重新赋值以触发响应式更新
     displayUserInfo.value = { ...userStore.userInfo }
   } catch (error) {
@@ -463,6 +463,16 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: center;
   gap: 20px;
+}
+
+.email-item {
+  min-width: 0;
+}
+
+.email-text {
+  white-space: nowrap;
+  word-break: keep-all;
+  display: inline-block;
 }
 
 .profile-avatar {

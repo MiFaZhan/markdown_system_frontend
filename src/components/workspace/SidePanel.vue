@@ -360,6 +360,28 @@ const emit = defineEmits([
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+@media (max-width: 700px) {
+  .outline-panel.mobile-outline {
+    width: 85% !important;
+    max-width: 300px;
+  }
+
+  .outline-header {
+    height: 48px;
+  }
+
+  .outline-header .el-button {
+    padding: 12px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .export-option {
+    padding: 16px 20px;
+    min-height: 48px;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   .search-result-item:hover {
     background-color: rgba(64, 158, 255, 0.12);

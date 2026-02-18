@@ -11,6 +11,7 @@
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item command="edit">编辑项目</el-dropdown-item>
+            <el-dropdown-item command="share">分享项目</el-dropdown-item>
             <el-dropdown-item command="delete">删除项目</el-dropdown-item>
             <el-dropdown-item command="view" divided>属性</el-dropdown-item>
           </el-dropdown-menu>
@@ -30,7 +31,7 @@ defineProps({
   }
 })
 
-const emit = defineEmits(['click', 'edit', 'delete', 'view'])
+const emit = defineEmits(['click', 'edit', 'share', 'delete', 'view'])
 
 function formatDate(timeStr) {
   if (!timeStr) return ''
@@ -153,12 +154,24 @@ function handleCommand(command) {
 @media (max-width: 768px) {
   .project-list-item {
     grid-template-columns: 40px 1fr 50px;
+    min-height: 46px;
+    padding: 10px 12px;
   }
 
   .list-date,
   .list-update,
   .list-desc {
     display: none;
+  }
+
+  .list-actions .el-button {
+    width: 28px;
+    height: 28px;
+    padding: 6px;
+  }
+
+  .list-name {
+    font-size: 14px;
   }
 }
 

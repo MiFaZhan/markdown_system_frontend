@@ -6,6 +6,7 @@
       :project="project"
       @click="$emit('enterProject', project)"
       @edit="$emit('editProject', project)"
+      @share="$emit('shareProject', project)"
       @delete="$emit('deleteProject', project)"
       @view="$emit('viewProperty', project)"
     />
@@ -22,7 +23,7 @@ defineProps({
   }
 })
 
-defineEmits(['enterProject', 'editProject', 'deleteProject', 'viewProperty'])
+defineEmits(['enterProject', 'editProject', 'shareProject', 'deleteProject', 'viewProperty'])
 </script>
 
 <style scoped>

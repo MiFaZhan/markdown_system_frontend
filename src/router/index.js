@@ -25,6 +25,11 @@ const router = createRouter({
       name: 'Workspace',
       component: () => import('../views/Workspace.vue'),
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/share/:shareCode',
+      name: 'Share',
+      component: () => import('../views/Share.vue')
     }
   ]
 })

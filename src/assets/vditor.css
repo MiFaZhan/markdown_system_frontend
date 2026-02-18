@@ -1,10 +1,12 @@
 .vditor-toolbar__save-status {
   position: absolute !important;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  margin: 0 !important;
-  padding: 0 !important;
+  right: 20px;
+  top: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  margin-left: 0 !important;
+  order: 999;
 }
 
 .save-status-text {
@@ -50,11 +52,39 @@
 
 .vditor-toolbar {
   display: flex !important;
+  align-items: center !important;
   justify-content: center !important;
-  flex-wrap: wrap !important;
   padding-left: 0 !important;
   padding-right: 0 !important;
   position: relative !important;
+}
+
+@media (max-width: 768px) {
+  .vditor-toolbar {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+    justify-content: flex-start !important;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* IE 10+ */
+  }
+
+  .vditor-toolbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+
+  .vditor-toolbar__item,
+  .vditor-toolbar__divider {
+    flex: 0 0 auto;
+  }
+
+  .vditor-toolbar__save-status {
+    position: static !important;
+    height: auto;
+    margin-left: auto !important;
+  }
 }
 
 .vditor-reset pre {
@@ -112,117 +142,118 @@
   margin: 0 -4px;
 }
 
+/* Move vditor--dark styles out of media query to support manual toggle */
+.vditor--dark {
+  --panel-background-color: #1e2021 !important;
+  --toolbar-background-color: #1e2021 !important;
+  --second-color: #b8b5b2 !important;
+}
+
+.vditor--dark .vditor-toolbar {
+  background-color: #1e2021 !important;
+  border-bottom-color: #3c3f41 !important;
+}
+
+.vditor--dark .vditor-toolbar__item button {
+  color: #e8e6e3 !important;
+}
+
+.vditor--dark .vditor-toolbar__item button:hover {
+  background-color: #303234 !important;
+}
+
+.vditor--dark .vditor-reset {
+  color: #e8e6e3 !important;
+}
+
+.vditor--dark .vditor-ir .vditor-reset {
+  background-color: #181a1b !important;
+}
+
+.vditor--dark pre.vditor-reset {
+  background-color: #242627 !important;
+}
+
+.vditor--dark code {
+  background-color: #2a2c2d !important;
+  color: #e8e6e3 !important;
+}
+
+.vditor--dark blockquote {
+  border-left-color: #5c9aff !important;
+  background-color: rgba(92, 154, 255, 0.08) !important;
+  color: #b8b5b2 !important;
+}
+
+.vditor--dark a {
+  color: #5c9aff !important;
+}
+
+.vditor--dark table {
+  border-color: #3c3f41 !important;
+}
+
+.vditor--dark th,
+.vditor--dark td {
+  border-color: #3c3f41 !important;
+}
+
+.vditor--dark th {
+  background-color: #242627 !important;
+}
+
+.vditor--dark hr {
+  border-color: #3c3f41 !important;
+}
+
+.vditor--dark h1,
+.vditor--dark h2,
+.vditor--dark h3,
+.vditor--dark h4,
+.vditor--dark h5,
+.vditor--dark h6 {
+  color: #e8e6e3 !important;
+  border-bottom-color: #3c3f41 !important;
+}
+
+.vditor--dark .vditor-ir__marker {
+  color: #8a8785 !important;
+}
+
+.vditor-panel--arrow {
+  background-color: #2a2c2d !important;
+  border-color: #3c3f41 !important;
+}
+
+.vditor-panel--arrow button {
+  color: #e8e6e3 !important;
+}
+
+.vditor-panel--arrow button:hover {
+  background-color: #303234 !important;
+}
+
+.vditor-tip {
+  background-color: #2a2c2d !important;
+  color: #e8e6e3 !important;
+}
+
+.vditor-outline {
+  background-color: #1e2021 !important;
+  border-left-color: #3c3f41 !important;
+}
+
+.vditor-outline__content span {
+  color: #e8e6e3 !important;
+}
+
+.vditor-outline__content span:hover {
+  background-color: #303234 !important;
+}
+
 @media (prefers-color-scheme: dark) {
   .heading-highlight {
     background-color: rgba(92, 154, 255, 0.25) !important;
-  }
-
-  .vditor--dark {
-    --panel-background-color: #1e2021 !important;
-    --toolbar-background-color: #1e2021 !important;
-    --second-color: #b8b5b2 !important;
-  }
-
-  .vditor--dark .vditor-toolbar {
-    background-color: #1e2021 !important;
-    border-bottom-color: #3c3f41 !important;
-  }
-
-  .vditor--dark .vditor-toolbar__item button {
-    color: #e8e6e3 !important;
-  }
-
-  .vditor--dark .vditor-toolbar__item button:hover {
-    background-color: #303234 !important;
-  }
-
-  .vditor--dark .vditor-reset {
-    color: #e8e6e3 !important;
-  }
-
-  .vditor--dark .vditor-ir .vditor-reset {
-    background-color: #181a1b !important;
-  }
-
-  .vditor--dark pre.vditor-reset {
-    background-color: #242627 !important;
-  }
-
-  .vditor--dark code {
-    background-color: #2a2c2d !important;
-    color: #e8e6e3 !important;
-  }
-
-  .vditor--dark blockquote {
-    border-left-color: #5c9aff !important;
-    background-color: rgba(92, 154, 255, 0.08) !important;
-    color: #b8b5b2 !important;
-  }
-
-  .vditor--dark a {
-    color: #5c9aff !important;
-  }
-
-  .vditor--dark table {
-    border-color: #3c3f41 !important;
-  }
-
-  .vditor--dark th,
-  .vditor--dark td {
-    border-color: #3c3f41 !important;
-  }
-
-  .vditor--dark th {
-    background-color: #242627 !important;
-  }
-
-  .vditor--dark hr {
-    border-color: #3c3f41 !important;
-  }
-
-  .vditor--dark h1,
-  .vditor--dark h2,
-  .vditor--dark h3,
-  .vditor--dark h4,
-  .vditor--dark h5,
-  .vditor--dark h6 {
-    color: #e8e6e3 !important;
-    border-bottom-color: #3c3f41 !important;
-  }
-
-  .vditor--dark .vditor-ir__marker {
-    color: #8a8785 !important;
-  }
-
-  .vditor-panel--arrow {
-    background-color: #2a2c2d !important;
-    border-color: #3c3f41 !important;
-  }
-
-  .vditor-panel--arrow button {
-    color: #e8e6e3 !important;
-  }
-
-  .vditor-panel--arrow button:hover {
-    background-color: #303234 !important;
-  }
-
-  .vditor-tip {
-    background-color: #2a2c2d !important;
-    color: #e8e6e3 !important;
-  }
-
-  .vditor-outline {
-    background-color: #1e2021 !important;
-    border-left-color: #3c3f41 !important;
-  }
-
-  .vditor-outline__content span {
-    color: #e8e6e3 !important;
-  }
-
-  .vditor-outline__content span:hover {
-    background-color: #303234 !important;
   }
 }
 

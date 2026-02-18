@@ -111,25 +111,25 @@ export function useEditor({ onContentChange, onAfterInit, onOutlineUpdate }) {
               // 如果 imageUrl 已经是完整路径（带 http），则不需要拼接
               let fullImageUrl = imageUrl
               if (!imageUrl.startsWith('http')) {
-                  // 从 API_BASE_URL 提取 Origin (协议+域名+端口)
-                  // 例如 http://localhost:8080/api -> http://localhost:8080
-                  let origin = ''
-                  try {
-                      if (API_BASE_URL.startsWith('http')) {
-                          const urlObj = new URL(API_BASE_URL)
-                          origin = urlObj.origin
-                      } else {
-                          // 如果 API_BASE_URL 是相对路径 (如 /api)，则使用当前页面 Origin
-                          origin = window.location.origin
-                      }
-                  } catch (e) {
-                      console.error('解析 API_BASE_URL 失败:', e)
-                      origin = window.location.origin
+                // 从 API_BASE_URL 提取 Origin (协议+域名+端口)
+                // 例如 http://localhost:8080/api -> http://localhost:8080
+                let origin = ''
+                try {
+                  if (API_BASE_URL.startsWith('http')) {
+                    const urlObj = new URL(API_BASE_URL)
+                    origin = urlObj.origin
+                  } else {
+                    // 如果 API_BASE_URL 是相对路径 (如 /api)，则使用当前页面 Origin
+                    origin = window.location.origin
                   }
-                  
-                  // 确保路径以 / 开头
-                  const path = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`
-                  fullImageUrl = `${origin}${path}`
+                } catch (e) {
+                  console.error('解析 API_BASE_URL 失败:', e)
+                  origin = window.location.origin
+                }
+
+                // 确保路径以 / 开头
+                const path = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`
+                fullImageUrl = `${origin}${path}`
               }
               tab.vditorInstance.insertValue(`![${file.name}](${fullImageUrl})`)
               ElMessage.success('图片上传成功')

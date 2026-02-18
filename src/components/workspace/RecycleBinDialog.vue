@@ -232,14 +232,14 @@ const formatTime = (timeStr) => {
 .node-actions {
   display: flex;
   gap: 12px;
-  opacity: 0;
-  transition: opacity 0.2s;
+  /* opacity: 0; */
+  /* transition: opacity 0.2s; */
   padding-left: 12px;
 }
 
-.custom-tree-node:hover .node-actions {
+/* .custom-tree-node:hover .node-actions {
   opacity: 1;
-}
+} */
 
 .action-btn {
   padding: 0 4px;
@@ -285,5 +285,30 @@ const formatTime = (timeStr) => {
   display: flex;
   align-items: center;
   color: #909399;
+}
+
+@media (max-width: 700px) {
+  .recycle-bin-container {
+    max-height: 60vh;
+  }
+
+  .custom-tree-node {
+    padding-right: 4px;
+  }
+
+  .node-time {
+    display: none;
+  }
+
+  .node-actions {
+    opacity: 1;
+    gap: 8px;
+    padding-left: 8px;
+  }
+
+  .action-btn {
+    font-size: 13px;
+    padding: 0 2px;
+  }
 }
 </style>

@@ -35,6 +35,7 @@
       :active-index="activeTabIndex"
       :show-sidebar="showSidebar"
       :show-outline="showOutline"
+      :is-mobile="isMobile"
       @switch-tab="handleSwitchTab"
       @close-tab="handleCloseTab"
       @close-others="handleCloseOthers"
@@ -91,7 +92,12 @@ const sidebarWidth = ref(260)
 const outlineWidth = ref(400)
 const currentFileId = ref(null)
 
-const { isMobile } = useResponsive({ sidebar: showSidebar, outline: showOutline })
+const { isMobile } = useResponsive({
+  sidebar: showSidebar,
+  outline: showOutline,
+  sidebarWidth,
+  outlineWidth
+})
 
 const {
   fileTree,
@@ -419,6 +425,9 @@ const handleCloseAllTabs = async () => {
 const handleNodeCommand = (cmd, data) => {
   if (cmd === 'rename') return handleRename(data)
   if (cmd === 'delete') return handleDelete(data, currentFileId, currentSelectedNodeId)
+  if (cmd === 'share') {
+    fileTreePanelRef.value?.handleNodeShare(data)
+  }
 }
 
 const handleDropWrapper = async (...args) => {
@@ -580,5 +589,13 @@ onMounted(() => {
   background: rgba(0, 0, 0, 0.3);
   z-index: 99;
   backdrop-filter: blur(2px);
+}
+
+@media (max-width: 700px) {
+  .workspace-layout.is-mobile .sidebar.mobile-sidebar,
+  .workspace-layout.is-mobile .outline-panel.mobile-outline {
+    width: 85% !important;
+    max-width: 300px;
+  }
 }
 </style>

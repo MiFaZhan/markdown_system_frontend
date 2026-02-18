@@ -11,10 +11,7 @@
       </el-form-item>
       <el-form-item label="项目图标">
         <div class="icon-form-item">
-          <el-input
-            v-model="projectForm.icon"
-            placeholder="请输入项目图标（支持 Emoji 表情）"
-          />
+          <el-input v-model="projectForm.icon" placeholder="请输入项目图标（支持 Emoji 表情）" />
           <div class="icon-hint">项目图标支持使用任意 Emoji 表情</div>
           <div class="icon-selector">
             <div
@@ -129,6 +126,11 @@ async function handleSave() {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  width: 100%;
+}
+
+.icon-form-item :deep(.el-input) {
+  width: 100%;
 }
 
 .icon-hint {
@@ -163,5 +165,25 @@ async function handleSave() {
 .icon-option.active {
   border-color: var(--el-color-primary);
   background-color: var(--el-color-primary-light-9);
+}
+
+@media (max-width: 768px) {
+  .icon-selector {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    max-width: 100%;
+  }
+
+  .icon-option {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .icon-selector {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 </style>

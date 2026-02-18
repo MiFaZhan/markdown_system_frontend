@@ -97,4 +97,18 @@ function formatTime(timeStr) {
   flex: 1;
   word-break: break-word;
 }
+
+@media (max-width: 768px) {
+  .property-item {
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 12px;
+  }
+
+  .property-label {
+    width: 100%;
+    text-align: left;
+    margin-right: 0;
+  }
+}
 </style>

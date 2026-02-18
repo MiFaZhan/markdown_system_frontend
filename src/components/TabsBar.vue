@@ -1,7 +1,11 @@
 <template>
   <div class="tabs-bar">
     <div class="toolbar-buttons">
-      <el-tooltip :content="showSidebar ? '收起侧边栏' : '展开侧边栏'" placement="bottom">
+      <el-tooltip
+        :content="showSidebar ? '收起侧边栏' : '展开侧边栏'"
+        placement="bottom"
+        :disabled="isMobile"
+      >
         <el-button
           :icon="showSidebar ? Fold : Expand"
           link
@@ -57,7 +61,11 @@
     <div class="toolbar-divider"></div>
 
     <div class="right-toolbar">
-      <el-tooltip :content="showOutline ? '收起右侧边栏' : '展开右侧边栏'" placement="bottom">
+      <el-tooltip
+        :content="showOutline ? '收起右侧边栏' : '展开右侧边栏'"
+        placement="bottom"
+        :disabled="isMobile"
+      >
         <el-button
           link
           class="toolbar-btn"
@@ -136,6 +144,10 @@ const props = defineProps({
     type: Boolean,
     required: true,
     default: true
+  },
+  isMobile: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -320,6 +332,7 @@ const handleDragEnd = (event) => {
   width: 18px;
   height: 18px;
   fill: currentColor;
+  pointer-events: none;
 }
 
 .toolbar-divider {
@@ -519,6 +532,7 @@ const handleDragEnd = (event) => {
 @media (max-width: 700px) {
   .tabs-bar {
     display: flex !important;
+    padding: 0 4px;
   }
 
   .toolbar-buttons {
@@ -531,13 +545,23 @@ const handleDragEnd = (event) => {
 
   .tab-item {
     min-width: 80px;
-    max-width: 150px;
-    padding: 4px 8px;
+    max-width: 120px;
+    padding: 6px 10px;
+  }
+
+  .tab-name {
+    max-width: 70px;
   }
 
   .toolbar-btn {
-    font-size: 16px;
+    font-size: 18px;
     padding: 6px;
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  .toolbar-divider {
+    margin: 0 2px;
   }
 }
 </style>

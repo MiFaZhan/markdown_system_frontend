@@ -52,6 +52,7 @@ const handleLogin = async () => {
   loading.value = true
   try {
     await store.login(form.account, form.password)
+    await store.fetchUserInfo()
     ElMessage.success('登录成功')
     router.push('/index')
   } catch (error) {
@@ -71,7 +72,9 @@ const handleLogin = async () => {
   background: linear-gradient(135deg, #722ed1 0%, #1890ff 100%);
 }
 .login-card {
-  width: 400px;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 16px;
   background-color: var(--color-background);
 }
 .card-header {
@@ -96,6 +99,21 @@ const handleLogin = async () => {
 
   .login-card {
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* 移动端适配 */
+@media (max-width: 480px) {
+  .login-wrapper {
+    padding: 16px;
+  }
+
+  .login-card {
+    margin: 0;
+  }
+
+  .card-header h2 {
+    font-size: 20px;
   }
 }
 </style>

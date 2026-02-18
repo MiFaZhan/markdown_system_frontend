@@ -2,7 +2,7 @@
   <div class="project-card" @click="$emit('click', project)">
     <div class="project-actions">
       <el-dropdown trigger="click" @command="handleCommand">
-        <button class="more-btn" @click.stop>
+        <button class="more-btn" @click.stop @mousedown.stop @touchstart.stop @touchend="blurBtn">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
             <path
               fill="currentColor"
@@ -13,6 +13,7 @@
         <template #dropdown>
           <el-dropdown-menu>
             <el-dropdown-item command="edit">编辑项目</el-dropdown-item>
+            <el-dropdown-item command="share">分享项目</el-dropdown-item>
             <el-dropdown-item command="delete">删除项目</el-dropdown-item>
             <el-dropdown-item command="view" divided>属性</el-dropdown-item>
           </el-dropdown-menu>
@@ -27,6 +28,12 @@
 </template>
 
 <script setup>
+function blurBtn(e) {
+  const t = e.currentTarget
+  // 延迟一个tick，确保下拉已触发后再移除焦点，避免高亮停留
+  requestAnimationFrame(() => t.blur())
+}
+
 defineProps({
   project: {
     type: Object,
@@ -34,7 +41,7 @@ defineProps({
   }
 })
 
-const emit = defineEmits(['click', 'edit', 'delete', 'view'])
+const emit = defineEmits(['click', 'edit', 'delete', 'view', 'share'])
 
 function handleCommand(command) {
   emit(command)
@@ -121,6 +128,7 @@ function handleCommand(command) {
   opacity: 1;
   transition: all 0.15s ease;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -130,12 +138,39 @@ function handleCommand(command) {
 }
 
 .more-btn:hover {
-  background: var(--el-fill-color-dark);
+  background: transparent;
   opacity: 1;
+}
+
+.more-btn:focus,
+.more-btn:active {
+  outline: none;
+  box-shadow: none;
+  background: transparent;
 }
 
 .more-btn svg {
   width: 14px;
   height: 14px;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .project-card {
+    min-height: 120px;
+  }
+
+  .more-btn {
+    opacity: 1;
+    width: 32px;
+    height: 32px;
+    padding: 6px;
+  }
+
+  .project-icon {
+    font-size: 48px;
+    width: 72px;
+    height: 72px;
+  }
 }
 </style>

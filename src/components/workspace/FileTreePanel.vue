@@ -61,7 +61,10 @@
         @node-drop="handleNodeDrop"
       >
         <template #default="{ node, data }">
-          <div class="tree-node" :class="{ active: selectedNodeId === data.id }">
+          <div
+            class="tree-node"
+            :class="{ active: selectedNodeId === data.id, 'is-mobile': isMobile }"
+          >
             <el-icon class="node-icon">
               <Folder v-if="data.type === 'folder'" />
               <Document v-else />
@@ -74,9 +77,12 @@
               @command="(cmd) => emit('node-command', cmd, data)"
               @click.stop
             >
-              <el-icon class="node-more"><Setting /></el-icon>
+              <el-icon class="node-more" @click.stop @mousedown.stop @touchstart.stop>
+                <Setting />
+              </el-icon>
               <template #dropdown>
                 <el-dropdown-menu>
+                  <el-dropdown-item command="share">分享</el-dropdown-item>
                   <el-dropdown-item command="rename">修改</el-dropdown-item>
                   <el-dropdown-item command="delete">删除</el-dropdown-item>
                 </el-dropdown-menu>
@@ -87,9 +93,17 @@
       </el-tree>
     </div>
 
-    <div class="recycle-bin-bar" @click="showRecycleBin = true">
-      <el-icon><Delete /></el-icon>
-      <span>回收站</span>
+    <div class="bottom-actions">
+      <el-tooltip content="节点分享管理" placement="top">
+        <div class="action-btn share-btn" @click="openShareManage">
+          <el-icon><Share /></el-icon>
+        </div>
+      </el-tooltip>
+      <el-tooltip content="回收站" placement="top">
+        <div class="action-btn recycle-btn" @click="showRecycleBin = true">
+          <el-icon><Delete /></el-icon>
+        </div>
+      </el-tooltip>
     </div>
 
     <div
@@ -102,11 +116,31 @@
       :project-id="projectId"
       @restore="emit('refresh')"
     />
+
+    <ShareLinkManageDialog
+      v-model:visible="showShareManage"
+      title="分享链接管理"
+      :target-type="[0, 1]"
+      :target-id="shareTargetId"
+      :target-name="shareTargetName"
+      @create="openShareCreate"
+    />
+
+    <ShareCreateDialog
+      v-model:visible="showShareCreate"
+      :target-type="shareTargetType"
+      :target-id="shareTargetId"
+      :target-name="shareTargetName"
+      @success="handleShareSuccess"
+    />
   </aside>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { polyfill } from 'mobile-drag-drop'
+import { scrollBehaviourDragImageTranslateOverride } from 'mobile-drag-drop/scroll-behaviour'
+import 'mobile-drag-drop/default.css'
 import {
   Plus,
   Back,
@@ -116,11 +150,62 @@ import {
   Search,
   FolderOpened,
   Setting,
-  Delete
+  Delete,
+  Share
 } from '@element-plus/icons-vue'
 import RecycleBinDialog from './RecycleBinDialog.vue'
+import ShareLinkManageDialog from '../share/ShareLinkManageDialog.vue'
+import ShareCreateDialog from '../share/ShareCreateDialog.vue'
+import { getShareList } from '../../api/shareService'
+import { ElMessage } from 'element-plus'
 
 const showRecycleBin = ref(false)
+const showShareManage = ref(false)
+const showShareCreate = ref(false)
+const shareTargetType = ref(1)
+const shareTargetId = ref(null)
+const shareTargetName = ref('')
+
+const openShareCreate = () => {
+  shareTargetType.value = 1
+  shareTargetId.value = null
+  shareTargetName.value = ''
+  showShareCreate.value = true
+}
+
+const openShareManage = () => {
+  shareTargetId.value = null
+  shareTargetName.value = ''
+  showShareManage.value = true
+}
+
+const handleNodeShare = async (node) => {
+  const targetType = node.type === 'folder' ? 0 : 1
+  shareTargetType.value = targetType
+  shareTargetId.value = node.id
+  shareTargetName.value = node.name
+  try {
+    const res = await getShareList(targetType, node.id)
+    const data = res.data || res
+    if (res.code && res.code !== 200) {
+      ElMessage.error(res.message || '获取分享列表失败')
+      return
+    }
+    const shareList = Array.isArray(data) ? data : []
+    if (shareList.length > 0) {
+      showShareManage.value = true
+    } else {
+      showShareCreate.value = true
+    }
+  } catch (error) {
+    console.error('Check share error:', error)
+    ElMessage.error('检查分享状态失败')
+  }
+}
+
+const handleShareSuccess = () => {
+  showShareManage.value = true
+}
 
 const props = defineProps({
   show: {
@@ -179,8 +264,31 @@ const emit = defineEmits([
   'refresh'
 ])
 
+onMounted(() => {
+  // 初始化移动端拖拽支持
+  polyfill({
+    // 使用滚动行为覆盖，确保拖拽时页面滚动的平滑性
+    dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
+    // 长按 500ms 触发拖拽
+    holdToDrag: 500,
+    // 拖拽图像居中于触摸点
+    dragImageCenterOnTouch: true,
+    // 仅在触摸事件中应用
+    forceApply: false
+  })
+
+  // 解决 iOS 上的滚动冲突问题（根据 mobile-drag-drop 文档建议）
+  // 注意：这可能会影响全局滚动行为，但在单页应用中通常是可接受的，或者需要更精细的控制
+  // 这里暂时注释掉，除非发现滚动有问题
+  // document.addEventListener('touchmove', function() {}, {passive: false});
+})
+
 const handleDragStart = (node, event) => {
   // 拖动开始时的处理
+  // 移动端震动反馈
+  if (navigator.vibrate) {
+    navigator.vibrate(50)
+  }
 }
 
 const handleNodeDrop = async (draggingNode, dropNode, dropType, event) => {
@@ -197,6 +305,11 @@ const selectFile = (file) => {
     emit('select-file', file)
   }
 }
+
+defineExpose({
+  handleNodeShare,
+  openShareManage
+})
 </script>
 
 <style scoped>
@@ -290,6 +403,41 @@ const selectFile = (file) => {
   color: var(--el-color-primary);
 }
 
+.bottom-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.action-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s;
+  background: var(--el-fill-color-light);
+  color: var(--el-text-color-regular);
+}
+
+.action-btn:hover {
+  background: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
+}
+
+.share-btn:hover {
+  color: var(--el-color-primary);
+}
+
+.recycle-btn:hover {
+  color: var(--el-color-danger);
+}
+
 .empty-files {
   display: flex;
   flex-direction: column;
@@ -316,27 +464,28 @@ const selectFile = (file) => {
   width: 100%;
   padding: 4px 8px;
   border-radius: 4px;
+  box-shadow: inset 2px 0 0 transparent;
 }
 
-.tree-node:hover:not(.active) {
-  background: var(--color-background-mute);
+/* 悬停背景效果在全局 el-tree 行容器上处理，避免与相邻行重合 */
+
+/* 取消 Element Plus el-tree 的选中高亮 */
+.el-tree-node.is-current > .el-tree-node__content {
+  background: transparent !important;
+  color: inherit !important;
 }
 
-.tree-node.active {
-  background: var(--el-color-primary-light-9);
+/* 统一选中样式 */
+.tree-node.active .node-label {
+  color: var(--el-text-color-primary);
+  font-weight: 600;
+}
+
+.tree-node.active .node-icon {
   color: var(--el-color-primary);
 }
 
 @media (prefers-color-scheme: dark) {
-  .tree-node.active {
-    background: rgba(64, 158, 255, 0.12);
-    color: var(--el-color-primary-light-3);
-  }
-
-  .tree-node:hover:not(.active) {
-    background: rgba(255, 255, 255, 0.05);
-  }
-
   .node-icon {
     color: var(--dr-text-muted, #8a8785);
   }
@@ -363,13 +512,45 @@ const selectFile = (file) => {
   opacity: 0;
   cursor: pointer;
   color: var(--el-text-color-placeholder);
+  position: relative;
+  z-index: 3;
 }
 
 .tree-node:hover .node-more {
   opacity: 1;
 }
 
-.is-mobile .node-more {
+.tree-node.is-mobile .node-more {
   opacity: 1;
+}
+
+@media (max-width: 700px) {
+  .sidebar.mobile-sidebar {
+    width: 85% !important;
+    max-width: 300px;
+  }
+
+  .tree-node {
+    padding: 6px 8px;
+    min-height: 36px;
+  }
+
+  .node-more {
+    opacity: 1;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sidebar-header {
+    height: 48px;
+  }
+
+  .sidebar-header .el-button {
+    padding: 8px 12px;
+  }
 }
 </style>
