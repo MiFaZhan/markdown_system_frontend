@@ -100,19 +100,38 @@
 
 <script setup>
 // import { List, Search, Document } from '@element-plus/icons-vue'
-import { List, Document, Download, DocumentCopy } from '@element-plus/icons-vue'
+import { List, Document, Download } from '@element-plus/icons-vue'
 import OutlineTree from '../OutlineTree.vue'
 
-const props = defineProps({
-  show: Boolean,
-  isMobile: Boolean,
-  width: Number,
-  sidePanelMode: String,
-  // contentSearchKeyword: String,
-  // contentSearchResults: Array,
-  outline: Array,
-  currentFile: Object,
-  currentFileContent: String
+defineProps({
+  show: {
+    type: Boolean,
+    default: false
+  },
+  isMobile: {
+    type: Boolean,
+    default: false
+  },
+  width: {
+    type: Number,
+    default: 300
+  },
+  sidePanelMode: {
+    type: String,
+    default: 'outline'
+  },
+  outline: {
+    type: Array,
+    default: () => []
+  },
+  currentFile: {
+    type: Object,
+    default: () => null
+  },
+  currentFileContent: {
+    type: String,
+    default: ''
+  }
 })
 
 const emit = defineEmits([

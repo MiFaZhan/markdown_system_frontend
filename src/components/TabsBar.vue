@@ -121,10 +121,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { Document, Fold, Expand, Close, Remove, FolderDelete } from '@element-plus/icons-vue'
 
-const props = defineProps({
+defineProps({
   tabs: {
     type: Array,
     required: true,
@@ -253,7 +253,7 @@ const handleDragEnter = (index, event) => {
   }
 }
 
-const handleDragLeave = (index) => {
+const handleDragLeave = () => {
   draggedOverIndex.value = -1
 }
 

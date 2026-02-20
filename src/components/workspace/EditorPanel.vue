@@ -30,12 +30,27 @@
 import { Document } from '@element-plus/icons-vue'
 import TabsBar from '../TabsBar.vue'
 
-const props = defineProps({
-  tabs: Array,
-  activeIndex: Number,
-  showSidebar: Boolean,
-  showOutline: Boolean,
-  isMobile: Boolean
+defineProps({
+  tabs: {
+    type: Array,
+    default: () => []
+  },
+  activeIndex: {
+    type: Number,
+    default: -1
+  },
+  showSidebar: {
+    type: Boolean,
+    default: true
+  },
+  showOutline: {
+    type: Boolean,
+    default: false
+  },
+  isMobile: {
+    type: Boolean,
+    default: false
+  }
 })
 
 const emit = defineEmits([

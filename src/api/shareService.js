@@ -8,7 +8,7 @@ export function updateShare(data) {
   return put('/share', data)
 }
 
-export function getShareList(targetType = null, targetId = null) {
+export function getShareList(targetType = null, projectId = null, nodeId = null) {
   const params = {}
   if (targetType !== null) {
     if (Array.isArray(targetType)) {
@@ -17,8 +17,11 @@ export function getShareList(targetType = null, targetId = null) {
       params.targetTypes = targetType
     }
   }
-  if (targetId !== null) {
-    params.targetId = targetId
+  if (projectId !== null) {
+    params.projectId = projectId
+  }
+  if (nodeId !== null) {
+    params.nodeId = nodeId
   }
   return get('/share/list', params)
 }

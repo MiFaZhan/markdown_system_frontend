@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
-export function useTabs({ onSwitch, onSave }) {
+export function useTabs({ onSwitch }) {
   const openTabs = ref([])
   const activeTabIndex = ref(-1)
   const saveTimers = ref({})
@@ -117,7 +117,9 @@ export function useTabs({ onSwitch, onSave }) {
     if (tab.vditorInstance) {
       try {
         tab.vditorInstance.destroy()
-      } catch (error) {}
+      } catch {
+        // vditor销毁可能失败，忽略错误
+      }
     }
 
     const container = document.getElementById(tab.containerId)
@@ -151,7 +153,7 @@ export function useTabs({ onSwitch, onSave }) {
       .map((tab, index) => ({ tab, index }))
       .filter(({ index }) => index !== exceptIndex)
 
-    for (const { tab, index } of tabsToClose) {
+    for (const { tab } of tabsToClose) {
       if (tab.isDirty) {
         try {
           await ElMessageBox.confirm(
@@ -171,7 +173,9 @@ export function useTabs({ onSwitch, onSave }) {
       if (tab.vditorInstance) {
         try {
           tab.vditorInstance.destroy()
-        } catch (error) {}
+        } catch {
+          // vditor销毁可能失败，忽略错误
+        }
       }
 
       const container = document.getElementById(tab.containerId)
@@ -213,7 +217,9 @@ export function useTabs({ onSwitch, onSave }) {
       if (tab.vditorInstance) {
         try {
           tab.vditorInstance.destroy()
-        } catch (error) {}
+        } catch {
+          // vditor销毁可能失败，忽略错误
+        }
       }
 
       const container = document.getElementById(tab.containerId)

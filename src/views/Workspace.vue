@@ -79,6 +79,7 @@ import { useTabs } from '../composables/useTabs'
 import { useEditor } from '../composables/useEditor'
 import { useFileOperations } from '../composables/useFileOperations'
 import { useExportAndCopy } from '../composables/useExportAndCopy'
+import { usePanelResize } from '../composables/usePanelResize'
 // import { useContentSearch } from '../composables/useContentSearch'
 
 const route = useRoute()
@@ -88,8 +89,14 @@ const fileTreePanelRef = ref(null)
 
 const showSidebar = ref(true)
 const showOutline = ref(true)
-const sidebarWidth = ref(260)
-const outlineWidth = ref(400)
+const { width: sidebarWidth, startResize: startSidebarResize } = usePanelResize({
+  defaultWidth: 260,
+  direction: 'left'
+})
+const { width: outlineWidth, startResize: startOutlineResize } = usePanelResize({
+  defaultWidth: 400,
+  direction: 'right'
+})
 const currentFileId = ref(null)
 
 const { isMobile } = useResponsive({
@@ -525,31 +532,11 @@ const scrollToHeading = (heading) => {
 }
 
 const startResize = (panel, e) => {
-  e.preventDefault()
-  const startX = e.clientX
-  const startWidth = panel === 'sidebar' ? sidebarWidth.value : outlineWidth.value
-
-  const onMouseMove = (moveEvent) => {
-    const delta = panel === 'sidebar' ? moveEvent.clientX - startX : startX - moveEvent.clientX
-    const newWidth = Math.max(150, Math.min(400, startWidth + delta))
-    if (panel === 'sidebar') {
-      sidebarWidth.value = newWidth
-    } else {
-      outlineWidth.value = newWidth
-    }
+  if (panel === 'sidebar') {
+    startSidebarResize(e)
+  } else {
+    startOutlineResize(e)
   }
-
-  const onMouseUp = () => {
-    document.removeEventListener('mousemove', onMouseMove)
-    document.removeEventListener('mouseup', onMouseUp)
-    document.body.style.cursor = ''
-    document.body.style.userSelect = ''
-  }
-
-  document.body.style.cursor = 'col-resize'
-  document.body.style.userSelect = 'none'
-  document.addEventListener('mousemove', onMouseMove)
-  document.addEventListener('mouseup', onMouseUp)
 }
 
 onMounted(() => {

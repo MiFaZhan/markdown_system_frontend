@@ -112,17 +112,6 @@ export function useFileTree(route) {
     return null
   }
 
-  const findFileByName = (fileList, name) => {
-    for (const file of fileList) {
-      if (file.name === name) return file
-      if (file.children) {
-        const found = findFileByName(file.children, name)
-        if (found) return found
-      }
-    }
-    return null
-  }
-
   watch(
     () => route.params.projectId,
     async (newProjectId) => {

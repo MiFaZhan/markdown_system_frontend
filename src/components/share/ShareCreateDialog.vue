@@ -4,6 +4,7 @@
     :model-value="visible"
     width="450px"
     destroy-on-close
+    append-to-body
     @update:model-value="emit('update:visible', $event)"
   >
     <el-form ref="formRef" :model="form" :rules="rules" label-width="80px">
@@ -55,7 +56,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, watch, onMounted } from 'vue'
+import { ref, reactive, watch } from 'vue'
 import { Folder, Document, Files } from '@element-plus/icons-vue'
 import { createShare } from '../../api/shareService'
 import { getAllProjects } from '../../api/projectService'

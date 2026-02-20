@@ -166,7 +166,9 @@ export function useContentSearch(options = {}) {
           parent.removeChild(mark)
         }
       }, 3000)
-    } catch (error) {}
+    } catch {
+      // 高亮移除失败，忽略错误
+    }
   }
 
   const calculateSimilarity = (str1, str2) => {
@@ -183,7 +185,7 @@ export function useContentSearch(options = {}) {
     return commonWords / Math.max(words1.length, words2.length)
   }
 
-  watch(contentSearchKeyword, (newValue) => {
+  watch(contentSearchKeyword, () => {
     searchInContent()
   })
 

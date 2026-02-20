@@ -119,8 +119,9 @@
 
     <ShareLinkManageDialog
       v-model:visible="showShareManage"
-      title="分享链接管理"
+      title="节点分享链接管理"
       :target-type="[0, 1]"
+      :project-id="projectId"
       :target-id="shareTargetId"
       :target-name="shareTargetName"
       @create="openShareCreate"
@@ -185,7 +186,7 @@ const handleNodeShare = async (node) => {
   shareTargetId.value = node.id
   shareTargetName.value = node.name
   try {
-    const res = await getShareList(targetType, node.id)
+    const res = await getShareList(targetType, null, node.id)
     const data = res.data || res
     if (res.code && res.code !== 200) {
       ElMessage.error(res.message || '获取分享列表失败')
@@ -207,7 +208,7 @@ const handleShareSuccess = () => {
   showShareManage.value = true
 }
 
-const props = defineProps({
+defineProps({
   show: {
     type: Boolean,
     default: true
@@ -248,9 +249,18 @@ const props = defineProps({
     type: [Number, String],
     default: null
   },
-  allowDrop: Function,
-  allowDrag: Function,
-  treeRef: Object
+  allowDrop: {
+    type: Function,
+    default: () => true
+  },
+  allowDrag: {
+    type: Function,
+    default: () => true
+  },
+  treeRef: {
+    type: Object,
+    default: () => null
+  }
 })
 
 const emit = defineEmits([
@@ -283,16 +293,14 @@ onMounted(() => {
   // document.addEventListener('touchmove', function() {}, {passive: false});
 })
 
-const handleDragStart = (node, event) => {
-  // 拖动开始时的处理
-  // 移动端震动反馈
+const handleDragStart = () => {
   if (navigator.vibrate) {
     navigator.vibrate(50)
   }
 }
 
-const handleNodeDrop = async (draggingNode, dropNode, dropType, event) => {
-  const success = await emit('drop', draggingNode, dropNode, dropType, event)
+const handleNodeDrop = async (draggingNode, dropNode, dropType) => {
+  const success = await emit('drop', draggingNode, dropNode, dropType)
 
   if (success === false) {
     event.stopPropagation()

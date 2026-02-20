@@ -1,6 +1,5 @@
 <template>
-  <div class="share-container">
-    <!-- 密码输入界面 -->
+  <div class="share-container" :data-share-theme="isDark ? 'dark' : 'light'">
     <div v-if="needPassword" class="password-container">
       <div class="password-box">
         <h2>{{ shareInfo.targetName || '访问受限' }}</h2>
@@ -21,13 +20,11 @@
       </div>
     </div>
 
-    <!-- 内容展示界面 -->
     <div
       v-else-if="content || shareInfo.targetType === 2 || shareInfo.targetType === 0"
       v-loading="loading"
       class="content-wrapper"
     >
-      <!-- 1. 单个文件分享视图 -->
       <div v-if="shareInfo.targetType === 1" class="single-file-view">
         <header class="view-header">
           <div>
@@ -37,27 +34,22 @@
               <span>分享时间: {{ formatTime(shareInfo.creationTime) }}</span>
             </div>
           </div>
-          <el-switch
-            :model-value="isDark"
-            inline-prompt
-            :active-icon="Moon"
-            :inactive-icon="Sunny"
-            @click="toggleTheme"
-          />
+          <el-tooltip :content="themeTooltip" placement="bottom">
+            <button class="theme-toggle-btn" aria-label="切换主题" @click="toggleTheme">
+              <component :is="themeIcon" class="theme-icon" />
+            </button>
+          </el-tooltip>
         </header>
         <div class="markdown-body">
           <div id="vditor-preview"></div>
         </div>
       </div>
 
-      <!-- 2. 项目/文件夹分享视图 (Workspace 布局) -->
       <div
         v-else-if="shareInfo.targetType === 0 || shareInfo.targetType === 2"
         class="workspace-layout"
       >
-        <!-- 主体区域 -->
         <div class="workspace-body">
-          <!-- 左侧文件树 -->
           <div class="sidebar-container">
             <ShareFileTree
               v-model:search-keyword="searchKeyword"
@@ -73,21 +65,16 @@
               @start-resize="startResize"
             >
               <template #footer>
-                <el-switch
-                  :model-value="isDark"
-                  inline-prompt
-                  :active-icon="Moon"
-                  :inactive-icon="Sunny"
-                  class="theme-switch-in-sidebar"
-                  @click="toggleTheme"
-                />
+                <el-tooltip :content="themeTooltip" placement="top">
+                  <button class="theme-toggle-btn" aria-label="切换主题" @click="toggleTheme">
+                    <component :is="themeIcon" class="theme-icon" />
+                  </button>
+                </el-tooltip>
               </template>
             </ShareFileTree>
           </div>
 
-          <!-- 中间编辑器区域 -->
           <main class="editor-area">
-            <!-- Tabs -->
             <div v-if="openTabs.length > 0" class="tabs-bar">
               <el-scrollbar>
                 <div class="tabs-wrapper">
@@ -108,7 +95,6 @@
               </el-scrollbar>
             </div>
 
-            <!-- 内容区 -->
             <div v-if="activeFileId" class="editor-content">
               <div
                 :id="'vditor-' + activeFileId"
@@ -121,7 +107,6 @@
             </div>
           </main>
 
-          <!-- 右侧大纲栏 -->
           <SidePanel
             :show="showRightPanel"
             :width="rightPanelWidth"
@@ -129,7 +114,7 @@
             :outline="outline"
             :current-file="activeFileId ? { id: activeFileId } : null"
             @set-mode="(mode) => (sidePanelMode = mode)"
-            @jump-to-heading="handleJumpToHeading"
+            @jump-to-heading="jumpToHeading"
             @start-resize="startResize"
             @export-markdown="handleExportMarkdown"
             @export-pdf="handleExportPdf"
@@ -139,7 +124,6 @@
       </div>
     </div>
 
-    <!-- 错误/空状态 -->
     <div v-else-if="!loading" class="empty-state-full">
       <el-empty :description="errorMsg || '暂无内容'" />
     </div>
@@ -152,45 +136,84 @@ import { useRoute } from 'vue-router'
 import { accessShare, getShareContent, getShareNodeContent } from '../api/shareService'
 import Vditor from 'vditor'
 import 'vditor/dist/index.css'
-import { Moon, Sunny, Document, Close } from '@element-plus/icons-vue'
+import { Moon, Sunny, Document, Close, Monitor } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import ShareFileTree from '../components/share/ShareFileTree.vue'
 import SidePanel from '../components/workspace/SidePanel.vue'
-import { useThemeStore } from '../stores/theme'
+import { usePanelResize } from '../composables/usePanelResize'
+import { useVditorPreview } from '../composables/useVditorPreview'
+import { useFileDownload } from '../composables/useFileDownload'
 
 const route = useRoute()
 const shareCode = route.params.shareCode
 
-// 主题 store
-const themeStore = useThemeStore()
+const shareTheme = ref('auto')
+const isDark = computed(() => {
+  if (shareTheme.value === 'auto') {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+  }
+  return shareTheme.value === 'dark'
+})
 
-// 状态
+const themeIcon = computed(() => {
+  switch (shareTheme.value) {
+    case 'light':
+      return Sunny
+    case 'dark':
+      return Moon
+    case 'auto':
+    default:
+      return Monitor
+  }
+})
+
+const themeTooltip = computed(() => {
+  switch (shareTheme.value) {
+    case 'light':
+      return '浅色模式'
+    case 'dark':
+      return '深色模式'
+    case 'auto':
+    default:
+      return '跟随浏览器'
+  }
+})
+
+const { renderPreview, jumpToHeading } = useVditorPreview(
+  computed(() => isDark.value),
+  (newOutline) => {
+    outline.value = newOutline
+  }
+)
+const { downloadMarkdown, downloadHtml } = useFileDownload()
+
 const loading = ref(true)
 const needPassword = ref(false)
 const password = ref('')
 const errorMsg = ref('')
 const shareInfo = ref({})
 const content = ref(null)
-const isDark = computed(() => themeStore.getEffectiveTheme() === 'dark')
 
-// 树相关
 const treeData = ref([])
 const searchKeyword = ref('')
 const showSidebar = ref(true)
-const sidebarWidth = ref(250)
+const { width: sidebarWidth, startResize: startSidebarResize } = usePanelResize({
+  defaultWidth: 250,
+  direction: 'left'
+})
 
-// 右侧大纲相关
 const showRightPanel = ref(true)
-const rightPanelWidth = ref(250)
+const { width: rightPanelWidth, startResize: startOutlineResize } = usePanelResize({
+  defaultWidth: 250,
+  direction: 'right'
+})
 const outline = ref([])
 const sidePanelMode = ref('outline')
 
-// Tabs 相关
 const openTabs = ref([])
 const activeFileId = ref(null)
 const fileContentMap = ref({})
 
-// 初始化
 onMounted(async () => {
   if (!shareCode) {
     errorMsg.value = '无效的分享链接'
@@ -200,41 +223,34 @@ onMounted(async () => {
   await checkAccess()
 })
 
-// 监听 activeFileId 变化，重新渲染 Vditor
 watch(activeFileId, async (newId) => {
   if (!newId) return
-
-  // 确保 DOM 更新后渲染
   await nextTick()
-
-  // 检查是否有缓存内容
-  const content = fileContentMap.value[newId]
-  if (content) {
-    initVditor(newId, content)
+  const fileContent = fileContentMap.value[newId]
+  if (fileContent) {
+    initVditor(newId, fileContent)
   } else {
-    // 如果没有缓存（理论上 handleFileSelect 会加载），重新加载
     await loadFileContent(newId)
   }
 })
 
-// 切换主题
 const toggleTheme = () => {
-  themeStore.cycleTheme()
+  const themeOrder = ['light', 'dark', 'auto']
+  const currentIndex = themeOrder.indexOf(shareTheme.value)
+  shareTheme.value = themeOrder[(currentIndex + 1) % themeOrder.length]
 
-  // 重新渲染当前激活的编辑器
   if (activeFileId.value) {
-    const content = fileContentMap.value[activeFileId.value]
-    if (content) {
+    const fileContent = fileContentMap.value[activeFileId.value]
+    if (fileContent) {
       const elId = `vditor-${activeFileId.value}`
       const el = document.getElementById(elId)
       if (el) {
         el.innerHTML = ''
-        initVditor(activeFileId.value, content)
+        initVditor(activeFileId.value, fileContent)
       }
     }
   }
 
-  // 更新单文件预览
   const previewEl = document.getElementById('vditor-preview')
   if (previewEl && content.value && shareInfo.value.targetType === 1) {
     previewEl.innerHTML = ''
@@ -242,7 +258,6 @@ const toggleTheme = () => {
   }
 }
 
-// 检查访问权限
 const checkAccess = async () => {
   loading.value = true
   errorMsg.value = ''
@@ -273,22 +288,18 @@ const handleAccess = () => {
   checkAccess()
 }
 
-// 获取内容
 const fetchContent = async () => {
   loading.value = true
   try {
     const res = await getShareContent(shareCode)
 
     if (res.targetType === 1) {
-      // 单文件
       content.value = res.content
       nextTick(() => {
         renderMarkdown(res.content)
       })
     } else if (res.targetType === 0 || res.targetType === 2) {
-      // 文件夹或项目
       content.value = res.content
-      // 转换树形结构适配组件
       if (res.content && res.content.rootNodes) {
         treeData.value = transformTreeData(res.content.rootNodes)
       } else {
@@ -303,7 +314,6 @@ const fetchContent = async () => {
   }
 }
 
-// 数据转换：后端 NodeItemVO -> 前端 Tree 格式
 const transformTreeData = (nodes) => {
   return nodes.map((node) => ({
     id: node.nodeId,
@@ -311,12 +321,10 @@ const transformTreeData = (nodes) => {
     name: node.nodeName,
     type: node.nodeType === 0 ? 'folder' : 'file',
     children: node.children ? transformTreeData(node.children) : [],
-    // 保留其他需要的字段
     creationTime: node.creationTime
   }))
 }
 
-// 搜索过滤
 const filteredTreeData = computed(() => {
   if (!searchKeyword.value) return treeData.value
   const keyword = searchKeyword.value.toLowerCase()
@@ -341,7 +349,6 @@ const filteredTreeData = computed(() => {
 })
 
 const searchResultCount = computed(() => {
-  // 简单计算过滤后的文件数
   const countFiles = (nodes) => {
     let count = 0
     for (const node of nodes) {
@@ -353,55 +360,31 @@ const searchResultCount = computed(() => {
   return countFiles(filteredTreeData.value)
 })
 
-// 单文件渲染
 const renderMarkdown = (markdown) => {
   const el = document.getElementById('vditor-preview')
-  if (!el) return
-  Vditor.preview(el, markdown, {
-    mode: isDark.value ? 'dark' : 'light',
-    theme: {
-      current: isDark.value ? 'dark' : 'light'
-    },
-    hljs: {
-      style: isDark.value ? 'native' : 'github'
-    },
-    after() {
-      updateOutline(el)
-      // 添加 vditor--dark 类，确保自定义 CSS 生效
-      if (isDark.value) {
-        el.classList.add('vditor--dark')
-      } else {
-        el.classList.remove('vditor--dark')
-      }
-    }
-  })
+  renderPreview(el, markdown)
 }
 
-// 树节点点击
 const handleFileSelect = async (node) => {
   if (node.type === 'folder') return
 
-  // 检查是否已打开
   const existingTab = openTabs.value.find((t) => t.fileId === node.id)
   if (existingTab) {
     activeFileId.value = node.id
     return
   }
 
-  // 添加新 Tab
   openTabs.value.push({
     fileId: node.id,
     fileName: node.name
   })
   activeFileId.value = node.id
 
-  // 获取内容并渲染
   await loadFileContent(node.id)
 }
 
 const loadFileContent = async (fileId) => {
   try {
-    // 检查缓存
     if (fileContentMap.value[fileId]) {
       nextTick(() => {
         initVditor(fileId, fileContentMap.value[fileId])
@@ -409,11 +392,12 @@ const loadFileContent = async (fileId) => {
       return
     }
 
-    const content = await getShareNodeContent(shareCode, fileId)
-    fileContentMap.value[fileId] = content // 缓存内容
+    const fileContent = await getShareNodeContent(shareCode, fileId)
+    const displayContent = fileContent ?? ''
+    fileContentMap.value[fileId] = displayContent
 
     nextTick(() => {
-      initVditor(fileId, content)
+      initVditor(fileId, displayContent)
     })
   } catch (error) {
     ElMessage.error(error.message || '加载文件失败')
@@ -421,57 +405,11 @@ const loadFileContent = async (fileId) => {
   }
 }
 
-const initVditor = (fileId, content) => {
+const initVditor = (fileId, fileContent) => {
   const elId = `vditor-${fileId}`
   const el = document.getElementById(elId)
   if (!el) return
-
-  Vditor.preview(el, content, {
-    mode: isDark.value ? 'dark' : 'light',
-    theme: {
-      current: isDark.value ? 'dark' : 'light'
-    },
-    hljs: {
-      style: isDark.value ? 'native' : 'github'
-    },
-    after() {
-      updateOutline(el)
-      // 添加 vditor--dark 类，确保自定义 CSS 生效
-      if (isDark.value) {
-        el.classList.add('vditor--dark')
-      } else {
-        el.classList.remove('vditor--dark')
-      }
-    }
-  })
-}
-
-// 更新大纲
-const updateOutline = (element) => {
-  if (!element) return
-  const headings = element.querySelectorAll('h1, h2, h3, h4, h5, h6')
-  const newOutline = []
-
-  headings.forEach((heading, index) => {
-    const id = `heading-${index}`
-    heading.id = id // 确保标题有 ID
-    newOutline.push({
-      id: id,
-      text: heading.innerText,
-      level: parseInt(heading.tagName.substring(1)),
-      line: index // 这里的 line 只是索引，实际行号未知，但不影响跳转
-    })
-  })
-
-  outline.value = newOutline
-}
-
-// 跳转到标题
-const handleJumpToHeading = (node) => {
-  const el = document.getElementById(node.id)
-  if (el) {
-    el.scrollIntoView({ behavior: 'smooth' })
-  }
+  renderPreview(el, fileContent)
 }
 
 const activateTab = (fileId) => {
@@ -483,14 +421,14 @@ const closeTab = (fileId) => {
   if (index === -1) return
 
   openTabs.value.splice(index, 1)
-  delete fileContentMap.value[fileId] // 清除缓存
+  delete fileContentMap.value[fileId]
 
   if (activeFileId.value === fileId) {
     if (openTabs.value.length > 0) {
       activeFileId.value = openTabs.value[openTabs.value.length - 1].fileId
     } else {
       activeFileId.value = null
-      outline.value = [] // 清空大纲
+      outline.value = []
     }
   }
 }
@@ -500,18 +438,14 @@ const formatTime = (timeStr) => {
   return new Date(timeStr).toLocaleString()
 }
 
-// 侧边栏调整
-const startResize = () => {
-  // 简化版，暂不实现拖拽调整
+const startResize = (panel, e) => {
+  if (panel === 'sidebar') {
+    startSidebarResize(e)
+  } else {
+    startOutlineResize(e)
+  }
 }
 
-const addExtensionIfNeeded = (fileName, extension) => {
-  if (!fileName) return extension
-  const ext = extension.startsWith('.') ? extension : `.${extension}`
-  return fileName.toLowerCase().endsWith(ext.toLowerCase()) ? fileName : `${fileName}${ext}`
-}
-
-// 导出为 Markdown
 const handleExportMarkdown = () => {
   const fileId = activeFileId.value
   if (!fileId || !fileContentMap.value[fileId]) {
@@ -520,23 +454,9 @@ const handleExportMarkdown = () => {
   }
 
   const currentTab = openTabs.value.find((t) => t.fileId === fileId)
-  const content = fileContentMap.value[fileId]
-  const fileName = addExtensionIfNeeded(currentTab?.fileName || 'document', 'md')
-
-  const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = fileName
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
-
-  ElMessage.success('导出成功')
+  downloadMarkdown(fileContentMap.value[fileId], currentTab?.fileName || 'document')
 }
 
-// 导出为 HTML
 const handleExportHtml = async () => {
   const fileId = activeFileId.value
   if (!fileId || !fileContentMap.value[fileId]) {
@@ -545,10 +465,10 @@ const handleExportHtml = async () => {
   }
 
   const currentTab = openTabs.value.find((t) => t.fileId === fileId)
-  const content = fileContentMap.value[fileId]
-  const fileName = addExtensionIfNeeded(currentTab?.fileName || 'document', 'html')
+  const fileContent = fileContentMap.value[fileId]
+  const fileName = currentTab?.fileName || 'document'
 
-  const html = await Vditor.md2html(content, {
+  const html = await Vditor.md2html(fileContent, {
     cdn: '/vditor/',
     preview: {
       theme: {
@@ -584,20 +504,9 @@ const handleExportHtml = async () => {
 </body>
 </html>`
 
-  const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = fileName
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
-
-  ElMessage.success('导出成功')
+  downloadHtml(fullHtml, fileName)
 }
 
-// 导出为 PDF（打印方式）
 const handleExportPdf = async () => {
   const fileId = activeFileId.value
   if (!fileId || !fileContentMap.value[fileId]) {
@@ -606,10 +515,10 @@ const handleExportPdf = async () => {
   }
 
   const currentTab = openTabs.value.find((t) => t.fileId === fileId)
-  const content = fileContentMap.value[fileId]
+  const fileContent = fileContentMap.value[fileId]
   const fileName = currentTab?.fileName || 'document'
 
-  const html = await Vditor.md2html(content, {
+  const html = await Vditor.md2html(fileContent, {
     cdn: '/vditor/',
     preview: {
       theme: {
@@ -696,41 +605,49 @@ const handleExportPdf = async () => {
   flex-direction: column;
 }
 
-/* 密码页样式 */
 .password-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  width: 100%;
   height: 100%;
-  background-color: var(--color-background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    135deg,
+    var(--color-background) 0%,
+    var(--el-color-primary-light-9) 100%
+  );
 }
 
 .password-box {
-  background: var(--color-background-soft);
+  background: var(--color-background);
   padding: 40px;
-  border-radius: 8px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   width: 400px;
-  text-align: center;
-  border: 1px solid var(--color-border);
 }
 
 .password-box h2 {
-  margin-bottom: 30px;
-  font-weight: 500;
+  margin: 0 0 20px;
+  text-align: center;
+  color: var(--color-text);
+}
+
+.input-group {
+  margin-bottom: 16px;
 }
 
 .error-msg {
   color: var(--el-color-danger);
-  margin-top: 10px;
-  font-size: 14px;
+  text-align: center;
+  margin: 0;
 }
 
-/* 单文件视图样式 */
+.content-wrapper {
+  flex: 1;
+  overflow: hidden;
+}
+
 .single-file-view {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 20px;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -740,164 +657,185 @@ const handleExportPdf = async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--color-border);
-  margin-bottom: 20px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--el-border-color-light);
+  background: var(--color-background);
+}
+
+.view-header h2 {
+  margin: 0;
+  font-size: 18px;
 }
 
 .meta-info {
-  font-size: 13px;
-  color: var(--color-text-secondary);
   display: flex;
-  gap: 15px;
-  margin-top: 8px;
-}
-
-.workspace-header .meta-info {
-  margin-top: 0;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--el-text-color-secondary);
+  margin-top: 4px;
 }
 
 .markdown-body {
   flex: 1;
-  overflow-y: auto;
-  padding: 0 10px;
+  overflow: auto;
+  padding: 24px;
 }
 
-/* Workspace 布局样式 */
+#vditor-preview {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
 .workspace-layout {
+  height: 100%;
   display: flex;
   flex-direction: column;
-  height: 100vh;
 }
 
 .workspace-body {
   flex: 1;
   display: flex;
   overflow: hidden;
-  position: relative;
-  padding: 0;
 }
 
 .sidebar-container {
   position: relative;
 }
 
-.sidebar-footer {
-  position: absolute;
-  bottom: 12px;
-  right: 12px;
-  z-index: 10;
-  display: flex;
-  justify-content: flex-end;
-}
-
 .editor-area {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: var(--color-background);
-  overflow: hidden;
+  min-width: 0;
+  background: var(--color-background);
 }
 
 .tabs-bar {
-  height: 36px;
-  background-color: var(--color-background-soft);
-  border-bottom: 1px solid var(--color-border);
+  height: 40px;
+  background: var(--el-bg-color-page);
+  border-bottom: 1px solid var(--el-border-color-light);
+  display: flex;
+  align-items: center;
 }
 
 .tabs-wrapper {
   display: flex;
-  height: 36px;
-  align-items: flex-end;
+  align-items: center;
+  height: 100%;
+  padding: 0 8px;
 }
 
 .tab-item {
-  height: 32px;
-  padding: 0 15px;
   display: flex;
   align-items: center;
   gap: 6px;
-  background-color: var(--color-background);
-  border-right: 1px solid var(--color-border);
-  border-top: 1px solid transparent;
+  padding: 0 12px;
+  height: 32px;
+  background: transparent;
+  border-radius: 4px;
   cursor: pointer;
+  white-space: nowrap;
   font-size: 13px;
-  user-select: none;
-  max-width: 200px;
+  color: var(--el-text-color-regular);
+  transition: all 0.2s;
+}
+
+.tab-item:hover {
+  background: var(--el-fill-color-light);
 }
 
 .tab-item.active {
-  background-color: var(--color-background);
-  border-top: 2px solid var(--color-primary);
-  color: var(--color-primary);
+  background: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
+}
+
+.tab-icon {
+  font-size: 14px;
 }
 
 .tab-title {
-  white-space: nowrap;
+  max-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .close-icon {
   font-size: 12px;
-  border-radius: 50%;
-  padding: 2px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.tab-item:hover .close-icon {
+  opacity: 1;
 }
 
 .close-icon:hover {
-  background-color: var(--color-background-mute);
+  color: var(--el-color-danger);
 }
 
 .editor-content {
   flex: 1;
-  overflow-y: auto;
-  padding: 16px 24px;
+  overflow: hidden;
 }
 
 .vditor-container {
-  max-width: 1000px;
-  margin: 0 auto;
-}
-
-.theme-switch-in-sidebar {
-  --el-switch-on-color: var(--el-color-primary);
-  --el-switch-off-color: #dcdfe6;
-  position: absolute;
-  bottom: 16px;
-  right: 16px;
-  z-index: 100;
-}
-
-.theme-switch-in-sidebar :deep(.el-switch__core) {
-  transform: scale(1.2);
-  transform-origin: right bottom;
-}
-
-@media (max-width: 767px) {
-  .theme-switch-in-sidebar {
-    bottom: 12px;
-    right: 12px;
-  }
-}
-
-@media (max-width: 480px) {
-  .theme-switch-in-sidebar {
-    bottom: 8px;
-    right: 8px;
-  }
+  height: 100%;
+  overflow: auto;
+  padding: 20px;
 }
 
 .empty-editor {
   flex: 1;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
 }
 
 .empty-state-full {
+  width: 100%;
+  height: 100%;
   display: flex;
-  justify-content: center;
   align-items: center;
-  height: 100vh;
+  justify-content: center;
+}
+
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--el-border-color);
+  border-radius: 8px;
+  background: var(--el-bg-color);
+  color: var(--el-text-color-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--el-fill-color-light);
+  border-color: var(--el-color-primary);
+  color: var(--el-color-primary);
+  transform: translateY(-1px);
+}
+
+.theme-toggle-btn:active {
+  transform: translateY(0);
+}
+
+.theme-icon {
+  width: 20px;
+  height: 20px;
+}
+
+:deep(.vditor-reset) {
+  color: var(--color-text);
+}
+
+:deep(.vditor--dark) {
+  background-color: var(--color-background);
 }
 </style>

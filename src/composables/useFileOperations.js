@@ -1,7 +1,7 @@
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { createNode, updateNode, deleteNode, uploadMarkdownFile } from '../api/nodeService'
 
-export function useFileOperations({ onRefresh, onCloseTab, onOpenFile }) {
+export function useFileOperations({ onRefresh, onCloseTab }) {
   const handleCreate = async (command, currentProjectId) => {
     if (!currentProjectId) {
       ElMessage.error('项目ID不存在，无法创建文件')
@@ -211,13 +211,12 @@ export function useFileOperations({ onRefresh, onCloseTab, onOpenFile }) {
     return true
   }
 
-  const allowDrag = (draggingNode) => {
+  const allowDrag = () => {
     return true
   }
 
-  const handleDrop = async (draggingNode, dropNode, dropType, event) => {
+  const handleDrop = async (draggingNode, dropNode, dropType) => {
     let parentId
-    let originalParentId = draggingNode.data.parentId
 
     if (dropType === 'inner') {
       if (dropNode.data.type !== 'folder') {

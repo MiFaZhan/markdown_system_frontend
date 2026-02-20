@@ -77,7 +77,7 @@
 <script setup>
 import { Document, Folder, Search, FolderOpened } from '@element-plus/icons-vue'
 
-const props = defineProps({
+defineProps({
   show: {
     type: Boolean,
     default: true
@@ -160,7 +160,7 @@ const selectFile = (data) => {
 }
 
 .sidebar-header {
-  height: 50px;
+  height: 40px;
   display: flex;
   align-items: center;
   padding: 0 15px;

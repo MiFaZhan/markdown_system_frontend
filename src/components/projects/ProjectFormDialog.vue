@@ -117,7 +117,9 @@ async function handleSave() {
   try {
     await formRef.value.validate()
     emit('save', projectForm.value)
-  } catch (error) {}
+  } catch {
+    // 表单验证失败
+  }
 }
 </script>
 

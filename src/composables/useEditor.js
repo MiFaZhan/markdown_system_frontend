@@ -6,7 +6,6 @@ import { getMarkdownContent, updateMarkdownContent } from '../api/contentService
 import { uploadImage } from '../api/imageService'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
-const VDITOR_CDN = import.meta.env.VITE_VDITOR_CDN || '/vditor/'
 
 export function useEditor({ onContentChange, onAfterInit, onOutlineUpdate }) {
   const saveTimers = ref({})
@@ -337,7 +336,9 @@ export function useEditor({ onContentChange, onAfterInit, onOutlineUpdate }) {
     if (vditorInstance) {
       try {
         vditorInstance.destroy()
-      } catch (error) {}
+      } catch {
+        // vditor销毁可能失败，忽略错误
+      }
     }
   }
 

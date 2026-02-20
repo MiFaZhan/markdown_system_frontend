@@ -4,6 +4,7 @@
     :model-value="visible"
     width="800px"
     destroy-on-close
+    append-to-body
     @update:model-value="emit('update:visible', $event)"
     @open="fetchShareList"
   >
@@ -33,11 +34,12 @@
         </el-table-column>
         <el-table-column prop="expireTime" label="过期时间" width="150">
           <template #default="{ row }">
-            <span v-if="row.expireTime" :class="{ 'expired': isExpired(row.expireTime) }">{{ formatTime(row.expireTime) }}</span>
+            <span v-if="row.expireTime" :class="{ expired: isExpired(row.expireTime) }">{{
+              formatTime(row.expireTime)
+            }}</span>
             <span v-else class="no-expire">永不过期</span>
           </template>
         </el-table-column>
-        <el-table-column prop="viewCount" label="访问次数" width="90" />
         <el-table-column label="操作" width="180">
           <template #default="{ row }">
             <el-button type="primary" link size="small" @click="copyShareLink(row)">
@@ -67,12 +69,7 @@
   </el-dialog>
 
   <!-- 编辑分享链接对话框 -->
-  <el-dialog
-    v-model="editDialogVisible"
-    title="编辑分享链接"
-    width="450px"
-    destroy-on-close
-  >
+  <el-dialog v-model="editDialogVisible" title="编辑分享链接" width="450px" destroy-on-close append-to-body>
     <el-form :model="editForm" label-width="80px">
       <el-form-item label="访问密码">
         <el-input v-model="editForm.password" placeholder="留空表示清除密码" clearable />
@@ -144,7 +141,7 @@ const shareList = ref([])
 const fetchShareList = async () => {
   loading.value = true
   try {
-    const res = await getShareList(props.targetType, props.targetId)
+    const res = await getShareList(props.targetType, props.projectId, props.targetId)
     const data = res.data || res
     if (res.code && res.code !== 200) {
       ElMessage.error(res.message || '获取分享列表失败')

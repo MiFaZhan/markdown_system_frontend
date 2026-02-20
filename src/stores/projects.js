@@ -56,42 +56,26 @@ export const useProjectsStore = defineStore('projects', () => {
 
   // 创建项目
   async function createProject(projectData) {
-    try {
-      const result = await projectService.createProject(projectData)
-      ElMessage.success('项目创建成功')
+    const result = await projectService.createProject(projectData)
+    ElMessage.success('项目创建成功')
 
-      await fetchProjects()
-      return result
-    } catch (error) {
-      throw error
-    }
+    await fetchProjects()
+    return result
   }
 
-  // 更新项目
   async function updateProject(projectData) {
-    try {
-      const result = await projectService.updateProject(projectData)
-      ElMessage.success('项目更新成功')
+    const result = await projectService.updateProject(projectData)
+    ElMessage.success('项目更新成功')
 
-      // 重新获取当前页数据
-      await fetchProjects()
-      return result
-    } catch (error) {
-      throw error
-    }
+    await fetchProjects()
+    return result
   }
 
-  // 删除项目
   async function deleteProject(projectId) {
-    try {
-      await projectService.deleteProject(projectId)
-      ElMessage.success('项目删除成功')
+    await projectService.deleteProject(projectId)
+    ElMessage.success('项目删除成功')
 
-      // 重新获取当前页数据
-      await fetchProjects()
-    } catch (error) {
-      throw error
-    }
+    await fetchProjects()
   }
 
   // 回收站：获取已删除项目列表
@@ -120,25 +104,15 @@ export const useProjectsStore = defineStore('projects', () => {
     }
   }
 
-  // 回收站：恢复项目
   async function restoreProject(projectId) {
-    try {
-      await projectService.restoreProject(projectId)
-      await fetchRecycleBinProjects()
-      await fetchProjects()
-    } catch (error) {
-      throw error
-    }
+    await projectService.restoreProject(projectId)
+    await fetchRecycleBinProjects()
+    await fetchProjects()
   }
 
-  // 回收站：彻底删除项目
   async function physicalDeleteProject(projectId) {
-    try {
-      await projectService.physicalDeleteProject(projectId)
-      await fetchRecycleBinProjects()
-    } catch (error) {
-      throw error
-    }
+    await projectService.physicalDeleteProject(projectId)
+    await fetchRecycleBinProjects()
   }
 
   // 设置排序
@@ -166,14 +140,8 @@ export const useProjectsStore = defineStore('projects', () => {
     return projectList.value.find((p) => p.id === currentProjectId.value) || null
   }
 
-  // 获取项目详情
   async function getProjectDetail(projectId) {
-    try {
-      const result = await projectService.getProject(projectId)
-      return result
-    } catch (error) {
-      throw error
-    }
+    return await projectService.getProject(projectId)
   }
 
   return {

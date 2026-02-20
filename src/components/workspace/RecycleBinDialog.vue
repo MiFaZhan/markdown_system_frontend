@@ -4,6 +4,7 @@
     :model-value="visible"
     width="600px"
     destroy-on-close
+    append-to-body
     @update:model-value="emit('update:visible', $event)"
     @open="fetchDeletedNodes"
   >
@@ -19,7 +20,7 @@
         :props="{ label: 'name', children: 'children' }"
         class="recycle-tree"
       >
-        <template #default="{ node, data }">
+        <template #default="{ data }">
           <div class="custom-tree-node">
             <span class="node-content">
               <el-icon class="node-icon">

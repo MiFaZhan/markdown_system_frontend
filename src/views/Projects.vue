@@ -168,7 +168,7 @@
     <ShareLinkManageDialog
       v-model:visible="shareManageVisible"
       :target-type="2"
-      :target-id="sharingProject?.id"
+      :project-id="sharingProject?.id"
       :title="sharingProject ? `分享链接管理 - ${sharingProject.name}` : '项目分享链接管理'"
       @create="shareCreateVisible = true"
     />
