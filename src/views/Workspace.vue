@@ -63,12 +63,32 @@
       @copy-zhihu="handleCopyZhihu"
       @copy-wechat="handleCopyWechat"
     />
+
+    <div v-if="isMobile" class="mobile-actions">
+      <el-button
+        circle
+        :icon="Menu"
+        size="large"
+        type="primary"
+        class="mobile-action-btn"
+        @click="openMobileSidebar"
+      />
+      <el-button
+        circle
+        :icon="Grid"
+        size="large"
+        type="primary"
+        class="mobile-action-btn"
+        @click="openMobileOutline"
+      />
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { Menu, Grid } from '@element-plus/icons-vue'
 
 import FileTreePanel from '../components/workspace/FileTreePanel.vue'
 import EditorPanel from '../components/workspace/EditorPanel.vue'
@@ -80,10 +100,13 @@ import { useEditor } from '../composables/useEditor'
 import { useFileOperations } from '../composables/useFileOperations'
 import { useExportAndCopy } from '../composables/useExportAndCopy'
 import { usePanelResize } from '../composables/usePanelResize'
+import { useThemeStore } from '../stores/theme'
 // import { useContentSearch } from '../composables/useContentSearch'
 
 const route = useRoute()
 const router = useRouter()
+
+const themeStore = useThemeStore()
 
 const fileTreePanelRef = ref(null)
 
@@ -320,6 +343,16 @@ const toggleOutline = () => {
   }
 }
 
+const openMobileSidebar = () => {
+  showSidebar.value = true
+  showOutline.value = false
+}
+
+const openMobileOutline = () => {
+  showOutline.value = true
+  showSidebar.value = false
+}
+
 const selectFile = async (file) => {
   currentSelectedNodeId.value = file.id
 
@@ -366,7 +399,8 @@ const {
   initVditor: initVditorFn,
   updateSaveStatus,
   loadFileContent,
-  debouncedSave
+  debouncedSave,
+  updateVditorTheme
 } = useEditor({
   onContentChange: handleContentChange,
   onAfterInit: handleEditorInit,
@@ -374,6 +408,18 @@ const {
 })
 
 initVditor = initVditorFn
+
+watch(
+  () => themeStore.getEffectiveTheme(),
+  (effectiveTheme) => {
+    const isDark = effectiveTheme === 'dark'
+    openTabs.value.forEach((tab) => {
+      if (tab.vditorInstance) {
+        updateVditorTheme(tab.vditorInstance, isDark)
+      }
+    })
+  }
+)
 
 const {
   handleExportMarkdown,
@@ -576,6 +622,46 @@ onMounted(() => {
   background: rgba(0, 0, 0, 0.3);
   z-index: 99;
   backdrop-filter: blur(2px);
+}
+
+.mobile-actions {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  z-index: 80;
+}
+
+.mobile-action-btn {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-action-btn,
+.mobile-action-btn .el-icon {
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
+}
+
+.mobile-action-btn .el-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-action-btn .el-icon svg {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
 }
 
 @media (max-width: 700px) {

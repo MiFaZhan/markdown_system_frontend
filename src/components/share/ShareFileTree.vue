@@ -68,6 +68,7 @@
     <slot name="footer"></slot>
 
     <div
+      v-if="!isMobile"
       class="resize-handle resize-handle-right"
       @mousedown="emit('start-resize', 'sidebar', $event)"
     ></div>
@@ -199,6 +200,7 @@ const selectFile = (data) => {
 .file-tree {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 10px 0;
 }
 
@@ -276,5 +278,29 @@ const selectFile = (data) => {
 
 :deep(.el-tree--highlight-current .el-tree-node.is-current > .el-tree-node__content) {
   background-color: var(--el-color-primary-light-9);
+}
+
+@media (max-width: 700px) {
+  .mobile-sidebar {
+    width: 85% !important;
+    max-width: 300px;
+  }
+
+  .sidebar-header {
+    height: 48px;
+  }
+
+  :deep(.el-tree-node__content) {
+    height: 40px; /* 移动端增加点击区域 */
+  }
+
+  .tree-node {
+    height: 40px;
+    font-size: 15px;
+  }
+
+  .sidebar-search {
+    padding: 12px 15px;
+  }
 }
 </style>

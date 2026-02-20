@@ -4,11 +4,13 @@ import Vditor from 'vditor'
 import 'vditor/dist/index.css'
 import { getMarkdownContent, updateMarkdownContent } from '../api/contentService'
 import { uploadImage } from '../api/imageService'
+import { useThemeStore } from '../stores/theme'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
 
 export function useEditor({ onContentChange, onAfterInit, onOutlineUpdate }) {
   const saveTimers = ref({})
+  const themeStore = useThemeStore()
 
   const initVditor = (tab, onInput) => {
     console.log(
@@ -60,7 +62,8 @@ export function useEditor({ onContentChange, onAfterInit, onOutlineUpdate }) {
       }
     })
 
-    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const effectiveTheme = themeStore.getEffectiveTheme()
+    const isDark = effectiveTheme === 'dark'
 
     try {
       console.log(
@@ -342,6 +345,18 @@ export function useEditor({ onContentChange, onAfterInit, onOutlineUpdate }) {
     }
   }
 
+  const updateVditorTheme = (vditorInstance, isDark) => {
+    if (!vditorInstance) return
+
+    try {
+      vditorInstance.setTheme(isDark ? 'dark' : 'classic')
+      vditorInstance.setCodeTheme(isDark ? 'native' : 'github')
+      vditorInstance.setContentTheme(isDark ? 'dark' : 'light', '/vditor/dist/css/content-theme')
+    } catch (error) {
+      console.error('[Outline] 更新 Vditor 主题失败:', error)
+    }
+  }
+
   return {
     initVditor,
     injectSaveStatus,
@@ -350,6 +365,7 @@ export function useEditor({ onContentChange, onAfterInit, onOutlineUpdate }) {
     loadFileContent,
     debouncedSave,
     destroyVditor,
+    updateVditorTheme,
     saveTimers
   }
 }

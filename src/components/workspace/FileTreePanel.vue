@@ -391,6 +391,7 @@ defineExpose({
 .file-tree {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 0 8px;
 }
 

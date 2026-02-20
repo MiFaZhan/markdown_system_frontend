@@ -536,7 +536,11 @@ const handleDragEnd = (event) => {
   }
 
   .toolbar-buttons {
-    display: flex;
+    display: none;
+  }
+
+  .right-toolbar {
+    display: none;
   }
 
   .tabs-container {

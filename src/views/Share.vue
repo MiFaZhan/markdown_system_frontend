@@ -1,7 +1,7 @@
 <template>
   <div class="share-container" :data-share-theme="isDark ? 'dark' : 'light'">
     <div v-if="needPassword" class="password-container">
-      <div class="password-box">
+      <div class="password-box" v-loading="loading">
         <h2>{{ shareInfo.targetName || '访问受限' }}</h2>
         <div class="input-group">
           <el-input
@@ -30,15 +30,21 @@
           <div>
             <h2>{{ shareInfo.targetName }}</h2>
             <div class="meta-info">
-              <span>浏览次数: {{ shareInfo.viewCount }}</span>
               <span>分享时间: {{ formatTime(shareInfo.creationTime) }}</span>
             </div>
           </div>
-          <el-tooltip :content="themeTooltip" placement="bottom">
-            <button class="theme-toggle-btn" aria-label="切换主题" @click="toggleTheme">
-              <component :is="themeIcon" class="theme-icon" />
-            </button>
-          </el-tooltip>
+          <div class="header-actions">
+            <el-tooltip content="下载 Markdown" placement="bottom">
+              <button class="action-btn" aria-label="下载" @click="handleExportMarkdown">
+                <el-icon><Download /></el-icon>
+              </button>
+            </el-tooltip>
+            <el-tooltip :content="themeTooltip" placement="bottom">
+              <button class="action-btn" aria-label="切换主题" @click="toggleTheme">
+                <component :is="themeIcon" class="theme-icon" />
+              </button>
+            </el-tooltip>
+          </div>
         </header>
         <div class="markdown-body">
           <div id="vditor-preview"></div>
@@ -50,29 +56,35 @@
         class="workspace-layout"
       >
         <div class="workspace-body">
-          <div class="sidebar-container">
-            <ShareFileTree
-              v-model:search-keyword="searchKeyword"
-              :show="showSidebar"
-              :width="sidebarWidth"
-              :project-name="shareInfo.targetName"
-              :share-type="shareInfo.targetType"
-              :file-tree="treeData"
-              :filtered-file-tree="filteredTreeData"
-              :selected-node-id="activeFileId"
-              :search-result-count="searchResultCount"
-              @select-file="handleFileSelect"
-              @start-resize="startResize"
-            >
-              <template #footer>
+          <ShareFileTree
+            v-model:search-keyword="searchKeyword"
+            :show="showSidebar"
+            :width="sidebarWidth"
+            :is-mobile="isMobile"
+            :project-name="shareInfo.targetName"
+            :share-type="shareInfo.targetType"
+            :file-tree="treeData"
+            :filtered-file-tree="filteredTreeData"
+            :selected-node-id="activeFileId"
+            :search-result-count="searchResultCount"
+            @select-file="handleFileSelect"
+            @start-resize="startResize"
+          >
+            <template #footer>
+              <div class="footer-actions">
+                <el-tooltip content="下载 Markdown" placement="top">
+                  <button class="action-btn" aria-label="下载" @click="handleExportMarkdown">
+                    <el-icon><Download /></el-icon>
+                  </button>
+                </el-tooltip>
                 <el-tooltip :content="themeTooltip" placement="top">
-                  <button class="theme-toggle-btn" aria-label="切换主题" @click="toggleTheme">
+                  <button class="action-btn" aria-label="切换主题" @click="toggleTheme">
                     <component :is="themeIcon" class="theme-icon" />
                   </button>
                 </el-tooltip>
-              </template>
-            </ShareFileTree>
-          </div>
+              </div>
+            </template>
+          </ShareFileTree>
 
           <main class="editor-area">
             <div v-if="openTabs.length > 0" class="tabs-bar">
@@ -108,18 +120,61 @@
           </main>
 
           <SidePanel
-            :show="showRightPanel"
-            :width="rightPanelWidth"
-            :side-panel-mode="sidePanelMode"
-            :outline="outline"
-            :current-file="activeFileId ? { id: activeFileId } : null"
-            @set-mode="(mode) => (sidePanelMode = mode)"
-            @jump-to-heading="jumpToHeading"
-            @start-resize="startResize"
-            @export-markdown="handleExportMarkdown"
-            @export-pdf="handleExportPdf"
-            @export-html="handleExportHtml"
-          />
+    :show="showRightPanel"
+    :width="rightPanelWidth"
+    :is-mobile="isMobile"
+    :side-panel-mode="sidePanelMode"
+    :outline="outline"
+    :current-file="activeFileId ? { id: activeFileId } : null"
+    @set-mode="(mode) => (sidePanelMode = mode)"
+    @jump-to-heading="jumpToHeading"
+    @start-resize="startResize"
+    @export-markdown="handleExportMarkdown"
+    @export-pdf="handleExportPdf"
+    @export-html="handleExportHtml"
+  />
+
+  <!-- 移动端遮罩层 -->
+  <div
+    v-if="isMobile && (showSidebar || showRightPanel)"
+    class="mobile-overlay"
+    @click="
+      () => {
+        showSidebar = false
+        showRightPanel = false
+      }
+    "
+  ></div>
+
+  <!-- 移动端操作按钮 -->
+  <div v-if="isMobile" class="mobile-actions">
+    <el-button
+      circle
+      :icon="Menu"
+      size="large"
+      type="primary"
+      class="mobile-action-btn"
+      @click="
+        () => {
+          showSidebar = true
+          showRightPanel = false
+        }
+      "
+    />
+    <el-button
+      circle
+      :icon="Grid"
+      size="large"
+      type="primary"
+      class="mobile-action-btn"
+      @click="
+        () => {
+          showRightPanel = true
+          showSidebar = false
+        }
+      "
+    />
+  </div>
         </div>
       </div>
     </div>
@@ -136,13 +191,14 @@ import { useRoute } from 'vue-router'
 import { accessShare, getShareContent, getShareNodeContent } from '../api/shareService'
 import Vditor from 'vditor'
 import 'vditor/dist/index.css'
-import { Moon, Sunny, Document, Close, Monitor } from '@element-plus/icons-vue'
+import { Moon, Sunny, Document, Close, Monitor, Menu, Grid, Download } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import ShareFileTree from '../components/share/ShareFileTree.vue'
 import SidePanel from '../components/workspace/SidePanel.vue'
 import { usePanelResize } from '../composables/usePanelResize'
 import { useVditorPreview } from '../composables/useVditorPreview'
 import { useFileDownload } from '../composables/useFileDownload'
+import { useResponsive } from '../composables/useResponsive'
 
 const route = useRoute()
 const shareCode = route.params.shareCode
@@ -209,6 +265,13 @@ const { width: rightPanelWidth, startResize: startOutlineResize } = usePanelResi
 })
 const outline = ref([])
 const sidePanelMode = ref('outline')
+
+const { isMobile } = useResponsive({
+  sidebar: showSidebar,
+  outline: showRightPanel,
+  sidebarWidth,
+  outlineWidth: rightPanelWidth
+})
 
 const openTabs = ref([])
 const activeFileId = ref(null)
@@ -447,6 +510,12 @@ const startResize = (panel, e) => {
 }
 
 const handleExportMarkdown = () => {
+  // 单文件分享直接下载
+  if (shareInfo.value.targetType === 1 && content.value) {
+    downloadMarkdown(content.value, shareInfo.value.targetName || 'document')
+    return
+  }
+
   const fileId = activeFileId.value
   if (!fileId || !fileContentMap.value[fileId]) {
     ElMessage.warning('请先选择一个文件')
@@ -623,7 +692,8 @@ const handleExportPdf = async () => {
   padding: 40px;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  width: 400px;
+  width: 90%;
+  max-width: 400px;
 }
 
 .password-box h2 {
@@ -696,9 +766,6 @@ const handleExportPdf = async () => {
   flex: 1;
   display: flex;
   overflow: hidden;
-}
-
-.sidebar-container {
   position: relative;
 }
 
@@ -799,7 +866,20 @@ const handleExportPdf = async () => {
   justify-content: center;
 }
 
-.theme-toggle-btn {
+.header-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.footer-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  padding: 0 12px;
+}
+
+.action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -815,20 +895,22 @@ const handleExportPdf = async () => {
   flex-shrink: 0;
 }
 
-.theme-toggle-btn:hover {
+.action-btn:hover {
   background: var(--el-fill-color-light);
   border-color: var(--el-color-primary);
   color: var(--el-color-primary);
   transform: translateY(-1px);
 }
 
-.theme-toggle-btn:active {
+.action-btn:active {
   transform: translateY(0);
 }
 
+.action-btn .el-icon,
 .theme-icon {
   width: 20px;
   height: 20px;
+  font-size: 20px;
 }
 
 :deep(.vditor-reset) {
@@ -837,5 +919,57 @@ const handleExportPdf = async () => {
 
 :deep(.vditor--dark) {
   background-color: var(--color-background);
+}
+
+.mobile-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 90;
+  backdrop-filter: blur(2px);
+  transition: all 0.3s ease;
+}
+
+.mobile-actions {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  z-index: 80;
+}
+
+.mobile-action-btn {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-action-btn,
+.mobile-action-btn .el-icon {
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
+}
+
+.mobile-action-btn .el-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-action-btn .el-icon svg {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
 }
 </style>

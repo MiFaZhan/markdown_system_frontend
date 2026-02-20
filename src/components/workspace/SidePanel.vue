@@ -6,6 +6,7 @@
     :style="{ width: width + 'px' }"
   >
     <div
+      v-if="!isMobile"
       class="resize-handle resize-handle-left"
       @mousedown="emit('start-resize', 'outline', $event)"
     ></div>
