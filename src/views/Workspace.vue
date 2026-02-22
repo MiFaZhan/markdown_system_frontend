@@ -101,7 +101,6 @@ import { useFileOperations } from '../composables/useFileOperations'
 import { useExportAndCopy } from '../composables/useExportAndCopy'
 import { usePanelResize } from '../composables/usePanelResize'
 import { useThemeStore } from '../stores/theme'
-// import { useContentSearch } from '../composables/useContentSearch'
 
 const route = useRoute()
 const router = useRouter()
@@ -144,37 +143,25 @@ const {
 let initVditor = null
 
 const handleTabSwitch = (result) => {
-  console.log('[Outline] handleTabSwitch 被调用:', result)
   if (!result || !result.tab) {
-    console.log('[Outline] handleTabSwitch 无效结果:', result)
     return
   }
 
   if (result.needInit && initVditor) {
-    console.log('[Outline] 开始初始化 Vditor 编辑器:', result.tab.fileId)
     nextTick(() => {
       const tab = result.tab
       const vditorInstance = initVditor(tab, handleEditorInput)
       if (vditorInstance) {
         tab.vditorInstance = vditorInstance
-        console.log('[Outline] Vditor 编辑器初始化完成:', result.tab.fileId)
       }
     })
   }
 
   currentFileId.value = result.tab.fileId
   if (result.tab.content) {
-    console.log(
-      '[Outline] 开始解析大纲:',
-      result.tab.fileId,
-      '内容长度:',
-      result.tab.content?.length || 0
-    )
     nextTick(() => {
       parseOutline(result.tab.content)
     })
-  } else {
-    console.log('[Outline] 标签页内容为空，跳过大纲解析:', result.tab.fileId)
   }
 }
 
@@ -195,19 +182,10 @@ const {
 
 const openFile = async (file) => {
   try {
-    console.log('[Outline] 开始打开文件:', file.id, file.name)
     const contentData = await loadFileContent(file.id)
-    console.log(
-      '[Outline] 文件内容加载完成:',
-      file.id,
-      '内容长度:',
-      contentData?.content?.length || 0
-    )
     const tab = await openTab(file, contentData, currentProjectId.value)
-    console.log('[Outline] 标签页已打开:', file.id, 'tab:', tab)
     currentFileId.value = file.id
   } catch (error) {
-    console.error('[Outline] 打开文件失败:', file.id, error)
   }
 }
 
@@ -254,26 +232,18 @@ const currentTabContent = computed(() => {
 })
 
 const parseOutline = (content) => {
-  console.log('[Outline] parseOutline 开始解析, 内容长度:', content?.length || 0)
   if (!content) {
-    console.log('[Outline] 内容为空，清空大纲')
     outline.value = []
     return
   }
 
   const normalizedContent = content.replace(/\r\n/g, '\n').replace(/\r/g, '\n')
-  console.log('[Outline] 换行符标准化完成')
 
   const headings = []
   const lines = normalizedContent.split('\n')
   let inCodeBlock = false
   let headingCount = 0
   const failedMatches = []
-  const sampleLines = lines.slice(0, 20)
-
-  console.log('[Outline] 开始遍历内容行，总行数:', lines.length)
-  console.log('[Outline] 前20行内容预览:', sampleLines)
-  console.log('[Outline] 换行符检测:', JSON.stringify(content.substring(0, 100)))
 
   for (const line of lines) {
     if (/^\s*```/.test(line) || /^\s*~~~/.test(line)) {
@@ -311,12 +281,6 @@ const parseOutline = (content) => {
     }
   }
 
-  console.log('[Outline] 大纲解析完成，找到', headingCount, '个标题')
-  console.log('[Outline] 包含 # 但未匹配到的行:', failedMatches.length)
-  if (failedMatches.length > 0) {
-    console.log('[Outline] 未匹配到的标题行详情:', failedMatches)
-  }
-  console.log('[Outline] 大纲数据:', headings)
   outline.value = headings
 }
 
@@ -364,18 +328,9 @@ const selectFile = async (file) => {
 }
 
 const handleEditorInit = (tab) => {
-  console.log('[Outline] handleEditorInit 被调用, fileId:', tab?.fileId)
   nextTick(() => {
     if (tab.content) {
-      console.log(
-        '[Outline] 编辑器初始化完成后开始解析大纲, fileId:',
-        tab.fileId,
-        '内容长度:',
-        tab.content?.length || 0
-      )
       parseOutline(tab.content)
-    } else {
-      console.log('[Outline] 编辑器初始化完成但内容为空, fileId:', tab.fileId)
     }
   })
 }
@@ -386,12 +341,6 @@ const handleEditorInput = (tab) => {
 }
 
 const handleContentChange = (tab) => {
-  console.log(
-    '[Outline] handleContentChange 被调用, fileId:',
-    tab?.fileId,
-    '内容长度:',
-    tab?.content?.length || 0
-  )
   parseOutline(tab.content)
 }
 
@@ -429,18 +378,6 @@ const {
   handleCopyZhihu,
   handleCopyWechat
 } = useExportAndCopy(getTabByFileId, currentFileId)
-
-// const { contentSearchKeyword, contentSearchResults, jumpToSearchResult } = useContentSearch({
-//   getCurrentFileId: () => currentFileId.value,
-//   getVditorInstance: () => {
-//     const currentTab = getTabByFileId(currentFileId.value)
-//     return currentTab?.vditorInstance
-//   },
-//   onSelectFile: selectFile
-// })
-// const contentSearchKeyword = ref('')
-// const contentSearchResults = ref([])
-// const jumpToSearchResult = () => {}
 
 const handleSwitchTab = (index) => {
   const result = switchTab(index)

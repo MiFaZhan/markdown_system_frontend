@@ -49,6 +49,7 @@ export const useProjectsStore = defineStore('projects', () => {
       return result
     } catch (error) {
       ElMessage.error('获取项目列表失败')
+      throw error
     } finally {
       loading.value = false
     }

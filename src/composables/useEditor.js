@@ -13,15 +13,7 @@ export function useEditor({ onContentChange, onAfterInit, onOutlineUpdate }) {
   const themeStore = useThemeStore()
 
   const initVditor = (tab, onInput) => {
-    console.log(
-      '[Outline] initVditor 开始初始化, fileId:',
-      tab?.fileId,
-      'containerId:',
-      tab?.containerId
-    )
-
     if (tab.isInitialized && tab.vditorInstance) {
-      console.log('[Outline] Vditor 已初始化，切换到当前标签页, fileId:', tab.fileId)
       const editorContainer = document.getElementById('editor-container')
       if (editorContainer) {
         Array.from(editorContainer.children).forEach((child) => {
@@ -37,14 +29,12 @@ export function useEditor({ onContentChange, onAfterInit, onOutlineUpdate }) {
 
     const editorContainer = document.getElementById('editor-container')
     if (!editorContainer) {
-      console.error('[Outline] 编辑器容器不存在')
       ElMessage.error('编辑器容器不存在')
       return null
     }
 
     let container = document.getElementById(tab.containerId)
     if (container) {
-      console.log('[Outline] 移除已存在的容器, containerId:', tab.containerId)
       container.remove()
     }
 
@@ -54,7 +44,6 @@ export function useEditor({ onContentChange, onAfterInit, onOutlineUpdate }) {
     container.style.height = '100%'
     container.style.display = 'block'
     editorContainer.appendChild(container)
-    console.log('[Outline] 创建新容器, containerId:', tab.containerId)
 
     Array.from(editorContainer.children).forEach((child) => {
       if (child.id !== tab.containerId) {
@@ -66,12 +55,6 @@ export function useEditor({ onContentChange, onAfterInit, onOutlineUpdate }) {
     const isDark = effectiveTheme === 'dark'
 
     try {
-      console.log(
-        '[Outline] 开始创建 Vditor 实例, fileId:',
-        tab.fileId,
-        '初始内容长度:',
-        tab.content?.length || 0
-      )
       const vditorInstance = new Vditor(tab.containerId, {
         height: '100%',
         width: '100%',
@@ -108,28 +91,20 @@ export function useEditor({ onContentChange, onAfterInit, onOutlineUpdate }) {
               const projectId = tab.projectId || 1
               const nodeId = tab.fileId || 1
               const imageUrl = await uploadImage(file, projectId, nodeId)
-              // imageUrl 已经包含 /api/images 前缀，如果 API_BASE_URL 也包含 /api，需要处理
-              // 通常 API_BASE_URL 是 host:port，所以直接拼接即可
-              // 如果 imageUrl 已经是完整路径（带 http），则不需要拼接
               let fullImageUrl = imageUrl
               if (!imageUrl.startsWith('http')) {
-                // 从 API_BASE_URL 提取 Origin (协议+域名+端口)
-                // 例如 http://localhost:8080/api -> http://localhost:8080
                 let origin = ''
                 try {
                   if (API_BASE_URL.startsWith('http')) {
                     const urlObj = new URL(API_BASE_URL)
                     origin = urlObj.origin
                   } else {
-                    // 如果 API_BASE_URL 是相对路径 (如 /api)，则使用当前页面 Origin
                     origin = window.location.origin
                   }
                 } catch (e) {
-                  console.error('解析 API_BASE_URL 失败:', e)
                   origin = window.location.origin
                 }
 
-                // 确保路径以 / 开头
                 const path = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`
                 fullImageUrl = `${origin}${path}`
               }
@@ -177,12 +152,6 @@ export function useEditor({ onContentChange, onAfterInit, onOutlineUpdate }) {
         },
         value: tab.content,
         input: (value) => {
-          console.log(
-            '[Outline] Vditor input 事件触发, fileId:',
-            tab.fileId,
-            '内容长度:',
-            value?.length || 0
-          )
           tab.content = value
           tab.isDirty = value !== tab.lastSavedContent
 
@@ -199,7 +168,6 @@ export function useEditor({ onContentChange, onAfterInit, onOutlineUpdate }) {
           }
         },
         after: () => {
-          console.log('[Outline] Vditor after 回调触发, fileId:', tab.fileId)
           tab.isInitialized = true
 
           nextTick(() => {
@@ -212,10 +180,8 @@ export function useEditor({ onContentChange, onAfterInit, onOutlineUpdate }) {
         }
       })
 
-      console.log('[Outline] Vditor 实例创建完成, fileId:', tab.fileId)
       return vditorInstance
     } catch (error) {
-      console.error('[Outline] Vditor 初始化失败, fileId:', tab?.fileId, error)
       ElMessage.error('编辑器初始化失败')
       return null
     }
@@ -274,30 +240,19 @@ export function useEditor({ onContentChange, onAfterInit, onOutlineUpdate }) {
 
   const saveTab = async (tab) => {
     if (!tab.isDirty || tab.isSaving) {
-      console.log(
-        '[Outline] saveTab 跳过保存, fileId:',
-        tab?.fileId,
-        'isDirty:',
-        tab?.isDirty,
-        'isSaving:',
-        tab?.isSaving
-      )
       return
     }
 
     try {
-      console.log('[Outline] saveTab 开始保存, fileId:', tab.fileId, '当前版本:', tab.version)
       tab.isSaving = true
       updateSaveStatus(tab)
 
       const result = await updateMarkdownContent(tab.fileId, tab.content, tab.version)
-      console.log('[Outline] saveTab 保存成功, fileId:', tab.fileId, '新版本:', result.version)
 
       tab.version = result.version
       tab.lastSavedContent = tab.content
       tab.isDirty = false
     } catch (error) {
-      console.error('[Outline] saveTab 保存失败, fileId:', tab?.fileId, error)
       ElMessage.error('保存失败: ' + error.message)
     } finally {
       tab.isSaving = false
@@ -306,20 +261,10 @@ export function useEditor({ onContentChange, onAfterInit, onOutlineUpdate }) {
   }
 
   const loadFileContent = async (fileId) => {
-    console.log('[Outline] loadFileContent 开始加载文件内容, fileId:', fileId)
     try {
       const contentData = await getMarkdownContent(fileId)
-      console.log(
-        '[Outline] loadFileContent 文件内容加载成功, fileId:',
-        fileId,
-        '内容长度:',
-        contentData?.content?.length || 0,
-        '版本:',
-        contentData?.version
-      )
       return contentData
     } catch (error) {
-      console.error('[Outline] loadFileContent 文件内容加载失败, fileId:', fileId, error)
       ElMessage.error('加载文件失败: ' + error.message)
       throw error
     }
@@ -353,7 +298,7 @@ export function useEditor({ onContentChange, onAfterInit, onOutlineUpdate }) {
       vditorInstance.setCodeTheme(isDark ? 'native' : 'github')
       vditorInstance.setContentTheme(isDark ? 'dark' : 'light', '/vditor/dist/css/content-theme')
     } catch (error) {
-      console.error('[Outline] 更新 Vditor 主题失败:', error)
+      // 主题更新失败，忽略
     }
   }
 

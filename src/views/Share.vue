@@ -203,6 +203,18 @@ import { useResponsive } from '../composables/useResponsive'
 const route = useRoute()
 const shareCode = route.params.shareCode
 
+const escapeHtml = (str) => {
+  if (!str) return ''
+  const escapeMap = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }
+  return str.replace(/[&<>"']/g, (char) => escapeMap[char])
+}
+
 const shareTheme = ref('auto')
 const isDark = computed(() => {
   if (shareTheme.value === 'auto') {
@@ -551,7 +563,7 @@ const handleExportHtml = async () => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${fileName}</title>
+  <title>${escapeHtml(fileName)}</title>
   <link rel="stylesheet" href="/vditor/dist/index.css">
   <style>
     body {
@@ -601,7 +613,7 @@ const handleExportPdf = async () => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${fileName}</title>
+  <title>${escapeHtml(fileName)}</title>
   <link rel="stylesheet" href="/vditor/dist/index.css">
   <style>
     body {

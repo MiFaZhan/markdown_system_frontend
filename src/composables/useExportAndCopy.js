@@ -1,6 +1,18 @@
 import { ElMessage } from 'element-plus'
 import Vditor from 'vditor'
 
+const escapeHtml = (str) => {
+  if (!str) return ''
+  const escapeMap = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }
+  return str.replace(/[&<>"']/g, (char) => escapeMap[char])
+}
+
 const addExtensionIfNeeded = (fileName, extension) => {
   if (!fileName) return extension
   const ext = extension.startsWith('.') ? extension : `.${extension}`
@@ -46,7 +58,7 @@ export function useExportAndCopy(getTabByFileId, currentFileId) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${fileName}</title>
+  <title>${escapeHtml(fileName)}</title>
   <link rel="stylesheet" href="/vditor/dist/index.css">
   <style>
     body {
@@ -118,7 +130,7 @@ export function useExportAndCopy(getTabByFileId, currentFileId) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${fileName}</title>
+  <title>${escapeHtml(fileName)}</title>
   <link rel="stylesheet" href="/vditor/dist/index.css">
   <style>
     body {

@@ -35,5 +35,8 @@
     "unplugin-icons": "^23.0.1",
     "unplugin-vue-components": "^31.0.0",
     "vite": "^4.4.5"
+  },
+  "volta": {
+    "node": "20.20.0"
   }
 }
