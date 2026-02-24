@@ -227,7 +227,7 @@ const emit = defineEmits([
 .outline-content {
   flex: 1;
   overflow-y: auto;
-  padding: 12px;
+  padding: 8px 4px;
 }
 
 .empty-outline {

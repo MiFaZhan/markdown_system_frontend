@@ -198,7 +198,7 @@ export function useExportAndCopy(getTabByFileId, currentFileId) {
       await Vditor.preview(tempDiv, markdown, {
         mode: 'light',
         cdn: '/vditor/',
-        lazyLoadImage: 'https://unpkg.com/vditor/dist/images/img-loading.svg',
+        lazyLoadImage: '/vditor/dist/images/img-loading.svg',
         anchor: 1,
         hljs: {
           style: 'github'
@@ -236,7 +236,7 @@ export function useExportAndCopy(getTabByFileId, currentFileId) {
       await Vditor.preview(tempDiv, markdown, {
         mode: 'light',
         cdn: '/vditor/',
-        lazyLoadImage: 'https://unpkg.com/vditor/dist/images/img-loading.svg',
+        lazyLoadImage: '/vditor/dist/images/img-loading.svg',
         anchor: 1,
         hljs: {
           style: 'github'

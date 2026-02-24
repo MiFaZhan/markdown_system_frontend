@@ -286,3 +286,17 @@
     }
   }
 }
+
+/* 修复预览模式下的显示问题，与分享页面保持一致 */
+.vditor-preview {
+  flex: 1 !important;
+  height: auto !important;
+  overflow: auto !important;
+  padding: 24px !important;
+  background-color: var(--color-background) !important;
+}
+
+.vditor-preview .vditor-reset {
+  max-width: 900px !important;
+  margin: 0 auto !important;
+}

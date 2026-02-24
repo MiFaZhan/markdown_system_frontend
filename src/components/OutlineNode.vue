@@ -60,55 +60,62 @@ const handleClick = () => {
 .outline-item {
   display: flex;
   align-items: center;
-  padding: 8px 12px;
+  padding: 6px 10px;
   font-size: 14px;
-  line-height: 1.4;
+  line-height: 1.5;
   color: var(--color-text);
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 4px;
   transition:
     background-color 0.15s,
     color 0.15s;
+  margin-bottom: 2px;
 }
 
 .outline-item:hover {
-  background: var(--color-background-mute);
-  color: var(--dr-accent, #409eff);
+  background: var(--color-background-soft);
+  color: var(--el-color-primary);
 }
 
 .outline-item.has-children {
-  font-weight: 600;
+  font-weight: 500;
 }
 
 /* 不同级别标题的字体大小 */
 .outline-item[data-level='1'] {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
+  color: var(--el-text-color-primary);
 }
 
 .outline-item[data-level='2'] {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
+  color: var(--el-text-color-regular);
 }
 
 .outline-item[data-level='3'] {
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--el-text-color-regular);
 }
 
 .outline-item[data-level='4'] {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 400;
+  color: var(--el-text-color-secondary);
 }
 
 .outline-item[data-level='5'] {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 400;
+  color: var(--el-text-color-secondary);
 }
 
 .outline-item[data-level='6'] {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 400;
+  color: var(--el-text-color-secondary);
 }
 
 .expand-icon {
@@ -138,8 +145,8 @@ const handleClick = () => {
 }
 
 .outline-children {
-  padding-left: 16px;
-  border-left: 1px solid var(--color-border);
-  margin-left: 7px;
+  padding-left: 14px;
+  border-left: 1px solid var(--el-border-color-lighter);
+  margin-left: 6px;
 }
 </style>

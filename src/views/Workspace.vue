@@ -64,23 +64,27 @@
       @copy-wechat="handleCopyWechat"
     />
 
-    <div v-if="isMobile" class="mobile-actions">
-      <el-button
-        circle
-        :icon="Menu"
-        size="large"
-        type="primary"
-        class="mobile-action-btn"
-        @click="openMobileSidebar"
-      />
-      <el-button
-        circle
-        :icon="Grid"
-        size="large"
-        type="primary"
-        class="mobile-action-btn"
-        @click="openMobileOutline"
-      />
+    <div class="mobile-actions">
+      <el-tooltip content="文件树" placement="left">
+        <el-button
+          circle
+          :icon="Folder"
+          size="large"
+          type="primary"
+          class="mobile-action-btn"
+          @click="toggleSidebar"
+        />
+      </el-tooltip>
+      <el-tooltip content="大纲/属性" placement="left">
+        <el-button
+          circle
+          :icon="Operation"
+          size="large"
+          type="primary"
+          class="mobile-action-btn"
+          @click="toggleOutline"
+        />
+      </el-tooltip>
     </div>
   </div>
 </template>
@@ -88,7 +92,7 @@
 <script setup>
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Menu, Grid } from '@element-plus/icons-vue'
+import { Folder, Operation } from '@element-plus/icons-vue'
 
 import FileTreePanel from '../components/workspace/FileTreePanel.vue'
 import EditorPanel from '../components/workspace/EditorPanel.vue'
@@ -116,7 +120,7 @@ const { width: sidebarWidth, startResize: startSidebarResize } = usePanelResize(
   direction: 'left'
 })
 const { width: outlineWidth, startResize: startOutlineResize } = usePanelResize({
-  defaultWidth: 400,
+  defaultWidth: 260,
   direction: 'right'
 })
 const currentFileId = ref(null)
@@ -125,7 +129,9 @@ const { isMobile } = useResponsive({
   sidebar: showSidebar,
   outline: showOutline,
   sidebarWidth,
-  outlineWidth
+  outlineWidth,
+  defaultSidebarWidth: 260,
+  defaultOutlineWidth: 260
 })
 
 const {
@@ -563,7 +569,7 @@ onMounted(() => {
 
 .mobile-actions {
   position: absolute;
-  bottom: 24px;
+  bottom: 48px;
   right: 24px;
   display: flex;
   flex-direction: column;

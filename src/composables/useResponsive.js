@@ -1,6 +1,13 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 
-export function useResponsive({ sidebar, outline, sidebarWidth, outlineWidth }) {
+export function useResponsive({
+  sidebar,
+  outline,
+  sidebarWidth,
+  outlineWidth,
+  defaultSidebarWidth = 260,
+  defaultOutlineWidth = 400
+}) {
   const isMobile = ref(false)
   let lastWidth = window.innerWidth
   let resizeTimer = null
@@ -9,8 +16,8 @@ export function useResponsive({ sidebar, outline, sidebarWidth, outlineWidth }) 
     const width = window.innerWidth
     isMobile.value = width < 700
 
-    if (width < 1000) {
-      if (isInit || (lastWidth >= 1000 && outline.value)) {
+    if (width < 1200) {
+      if (isInit || (lastWidth >= 1200 && outline.value)) {
         outline.value = false
       }
     }
@@ -20,17 +27,17 @@ export function useResponsive({ sidebar, outline, sidebarWidth, outlineWidth }) 
         sidebar.value = false
       }
       if (sidebarWidth) {
-        sidebarWidth.value = Math.min(260, Math.floor(width * 0.85))
+        sidebarWidth.value = Math.min(defaultSidebarWidth, Math.floor(width * 0.85))
       }
       if (outlineWidth) {
-        outlineWidth.value = Math.min(300, Math.floor(width * 0.85))
+        outlineWidth.value = Math.min(defaultOutlineWidth, Math.floor(width * 0.85))
       }
     } else {
-      if (sidebarWidth && sidebarWidth.value !== 260) {
-        sidebarWidth.value = 260
+      if (sidebarWidth && sidebarWidth.value !== defaultSidebarWidth) {
+        sidebarWidth.value = defaultSidebarWidth
       }
-      if (outlineWidth && outlineWidth.value !== 400) {
-        outlineWidth.value = 400
+      if (outlineWidth && outlineWidth.value !== defaultOutlineWidth) {
+        outlineWidth.value = defaultOutlineWidth
       }
     }
 

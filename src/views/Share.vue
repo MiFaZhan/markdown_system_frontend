@@ -147,33 +147,45 @@
   ></div>
 
   <!-- 移动端操作按钮 -->
-  <div v-if="isMobile" class="mobile-actions">
-    <el-button
-      circle
-      :icon="Menu"
-      size="large"
-      type="primary"
-      class="mobile-action-btn"
-      @click="
-        () => {
-          showSidebar = true
-          showRightPanel = false
-        }
-      "
-    />
-    <el-button
-      circle
-      :icon="Grid"
-      size="large"
-      type="primary"
-      class="mobile-action-btn"
-      @click="
-        () => {
-          showRightPanel = true
-          showSidebar = false
-        }
-      "
-    />
+  <div class="mobile-actions">
+    <el-tooltip content="文件树" placement="left">
+      <el-button
+        circle
+        :icon="Folder"
+        size="large"
+        type="primary"
+        class="mobile-action-btn"
+        @click="
+          () => {
+            if (isMobile) {
+              showSidebar = true
+              showRightPanel = false
+            } else {
+              showSidebar = !showSidebar
+            }
+          }
+        "
+      />
+    </el-tooltip>
+    <el-tooltip content="侧边栏" placement="left">
+        <el-button
+          circle
+          :icon="Operation"
+          size="large"
+          type="primary"
+          class="mobile-action-btn"
+          @click="
+            () => {
+              if (isMobile) {
+                showRightPanel = true
+                showSidebar = false
+              } else {
+                showRightPanel = !showRightPanel
+              }
+            }
+          "
+        />
+      </el-tooltip>
   </div>
         </div>
       </div>
@@ -189,9 +201,7 @@
 import { ref, onMounted, nextTick, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { accessShare, getShareContent, getShareNodeContent } from '../api/shareService'
-import Vditor from 'vditor'
-import 'vditor/dist/index.css'
-import { Moon, Sunny, Document, Close, Monitor, Menu, Grid, Download } from '@element-plus/icons-vue'
+import { Moon, Sunny, Document, Close, Monitor, Folder, Operation, Download } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import ShareFileTree from '../components/share/ShareFileTree.vue'
 import SidePanel from '../components/workspace/SidePanel.vue'
@@ -266,13 +276,13 @@ const treeData = ref([])
 const searchKeyword = ref('')
 const showSidebar = ref(true)
 const { width: sidebarWidth, startResize: startSidebarResize } = usePanelResize({
-  defaultWidth: 250,
+  defaultWidth: 260,
   direction: 'left'
 })
 
 const showRightPanel = ref(true)
 const { width: rightPanelWidth, startResize: startOutlineResize } = usePanelResize({
-  defaultWidth: 250,
+  defaultWidth: 260,
   direction: 'right'
 })
 const outline = ref([])
@@ -282,7 +292,9 @@ const { isMobile } = useResponsive({
   sidebar: showSidebar,
   outline: showRightPanel,
   sidebarWidth,
-  outlineWidth: rightPanelWidth
+  outlineWidth: rightPanelWidth,
+  defaultSidebarWidth: 260,
+  defaultOutlineWidth: 260
 })
 
 const openTabs = ref([])
@@ -549,6 +561,7 @@ const handleExportHtml = async () => {
   const fileContent = fileContentMap.value[fileId]
   const fileName = currentTab?.fileName || 'document'
 
+  const Vditor = (await import('vditor')).default
   const html = await Vditor.md2html(fileContent, {
     cdn: '/vditor/',
     preview: {
@@ -599,6 +612,7 @@ const handleExportPdf = async () => {
   const fileContent = fileContentMap.value[fileId]
   const fileName = currentTab?.fileName || 'document'
 
+  const Vditor = (await import('vditor')).default
   const html = await Vditor.md2html(fileContent, {
     cdn: '/vditor/',
     preview: {
@@ -678,12 +692,16 @@ const handleExportPdf = async () => {
 
 <style scoped>
 .share-container {
-  width: 100vw;
-  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background-color: var(--color-background);
   color: var(--color-text);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .password-container {
@@ -861,6 +879,13 @@ const handleExportPdf = async () => {
   height: 100%;
   overflow: auto;
   padding: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+  scrollbar-width: none;
+}
+
+.vditor-container::-webkit-scrollbar {
+  display: none;
 }
 
 .empty-editor {
@@ -888,7 +913,8 @@ const handleExportPdf = async () => {
   display: flex;
   gap: 12px;
   justify-content: center;
-  padding: 0 12px;
+  padding: 12px;
+  border-top: 1px solid var(--el-border-color-light);
 }
 
 .action-btn {
@@ -947,7 +973,7 @@ const handleExportPdf = async () => {
 
 .mobile-actions {
   position: absolute;
-  bottom: 24px;
+  bottom: 48px;
   right: 24px;
   display: flex;
   flex-direction: column;

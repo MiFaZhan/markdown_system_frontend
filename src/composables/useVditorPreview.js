@@ -1,7 +1,5 @@
-import Vditor from 'vditor'
-
 export function useVditorPreview(isDark, onOutlineUpdate) {
-  const renderPreview = (element, markdown) => {
+  const renderPreview = async (element, markdown) => {
     if (!element || !markdown) {
       if (element) {
         element.innerHTML = '<div class="empty-content"><span>文件内容为空</span></div>'
@@ -12,7 +10,11 @@ export function useVditorPreview(isDark, onOutlineUpdate) {
       return
     }
 
+    const Vditor = (await import('vditor')).default
+    await import('vditor/dist/index.css')
+
     Vditor.preview(element, markdown, {
+      cdn: '/vditor/',
       mode: isDark.value ? 'dark' : 'light',
       theme: {
         current: isDark.value ? 'dark' : 'light'

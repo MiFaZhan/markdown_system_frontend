@@ -210,8 +210,8 @@ const selectFile = (data) => {
   font-size: 14px;
   padding-right: 8px;
   width: 100%;
-  height: 32px; /* 固定高度，增加点击区域 */
-  color: var(--el-text-color-regular);
+  height: 36px;
+  color: var(--el-text-color-primary);
 }
 
 .tree-node.active {
@@ -221,8 +221,8 @@ const selectFile = (data) => {
 
 .node-icon {
   margin-right: 8px;
-  font-size: 16px;
-  flex-shrink: 0; /* 防止图标被压缩 */
+  font-size: 18px;
+  flex-shrink: 0;
 }
 
 .node-label {
@@ -273,11 +273,18 @@ const selectFile = (data) => {
 
 /* 适配 Element Plus Tree 样式 */
 :deep(.el-tree-node__content) {
-  height: 32px; /* 增加节点高度 */
+  height: 36px;
+  border-radius: 4px;
+  margin: 0 4px;
+}
+
+:deep(.el-tree-node__content:hover) {
+  background-color: var(--el-fill-color-light);
 }
 
 :deep(.el-tree--highlight-current .el-tree-node.is-current > .el-tree-node__content) {
   background-color: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
 }
 
 @media (max-width: 700px) {

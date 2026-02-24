@@ -1,6 +1,6 @@
 <template>
   <div class="tabs-bar">
-    <div class="toolbar-buttons">
+    <!-- <div class="toolbar-buttons">
       <el-tooltip
         :content="showSidebar ? '收起侧边栏' : '展开侧边栏'"
         placement="bottom"
@@ -15,7 +15,7 @@
       </el-tooltip>
 
       <div class="toolbar-divider"></div>
-    </div>
+    </div> -->
 
     <div class="tabs-container">
       <div
@@ -60,7 +60,7 @@
 
     <div class="toolbar-divider"></div>
 
-    <div class="right-toolbar">
+    <!-- <div class="right-toolbar">
       <el-tooltip
         :content="showOutline ? '收起右侧边栏' : '展开右侧边栏'"
         placement="bottom"
@@ -86,7 +86,7 @@
           </template>
         </el-button>
       </el-tooltip>
-    </div>
+    </div> -->
 
     <teleport to="body">
       <div
