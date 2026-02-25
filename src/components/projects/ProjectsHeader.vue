@@ -1,7 +1,7 @@
 <template>
   <header class="projects-header">
     <div class="header-left">
-      <span class="logo">My Notes</span>
+      <span class="logo">项目列表</span>
     </div>
     <div class="header-right">
       <el-tooltip :content="themeStore.getThemeTooltip()" placement="bottom">

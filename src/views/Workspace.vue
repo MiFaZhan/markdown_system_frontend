@@ -191,8 +191,7 @@ const openFile = async (file) => {
     const contentData = await loadFileContent(file.id)
     const tab = await openTab(file, contentData, currentProjectId.value)
     currentFileId.value = file.id
-  } catch (error) {
-  }
+  } catch (error) {}
 }
 
 const closeTabByFileId = async (fileId) => {
@@ -551,8 +550,14 @@ onMounted(() => {
 <style scoped>
 .workspace-layout {
   display: flex;
-  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   width: 100vw;
+  height: 100vh;
+  height: 100dvh; /* 动态视口高度，适配移动设备 */
   overflow: hidden;
 }
 

@@ -234,8 +234,38 @@
 }
 
 .vditor-tip {
+  background-color: transparent !important;
+  padding: 0 !important;
+}
+
+.vditor-tip .vditor-tip__content {
   background-color: #2a2c2d !important;
   color: #e8e6e3 !important;
+  padding: 8px 16px !important;
+  border-radius: 4px !important;
+  display: inline-block !important;
+}
+
+/* 提示自动消失动画 */
+.vditor-tip.vditor-tip--show {
+  animation: vditor-tip-fade 2.5s ease-in-out forwards !important;
+}
+
+@keyframes vditor-tip-fade {
+  0%,
+  70% {
+    opacity: 1;
+    visibility: visible;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+/* 隐藏空的vditor-tip元素 */
+.vditor-tip:empty {
+  display: none !important;
 }
 
 .vditor-outline {

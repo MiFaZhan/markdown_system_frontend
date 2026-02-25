@@ -69,7 +69,13 @@
   </el-dialog>
 
   <!-- 编辑分享链接对话框 -->
-  <el-dialog v-model="editDialogVisible" title="编辑分享链接" width="450px" destroy-on-close append-to-body>
+  <el-dialog
+    v-model="editDialogVisible"
+    title="编辑分享链接"
+    width="450px"
+    destroy-on-close
+    append-to-body
+  >
     <el-form :model="editForm" label-width="80px">
       <el-form-item label="访问密码">
         <el-input v-model="editForm.password" placeholder="留空表示清除密码" clearable />

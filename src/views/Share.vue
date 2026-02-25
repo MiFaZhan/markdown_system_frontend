@@ -120,73 +120,73 @@
           </main>
 
           <SidePanel
-    :show="showRightPanel"
-    :width="rightPanelWidth"
-    :is-mobile="isMobile"
-    :side-panel-mode="sidePanelMode"
-    :outline="outline"
-    :current-file="activeFileId ? { id: activeFileId } : null"
-    @set-mode="(mode) => (sidePanelMode = mode)"
-    @jump-to-heading="jumpToHeading"
-    @start-resize="startResize"
-    @export-markdown="handleExportMarkdown"
-    @export-pdf="handleExportPdf"
-    @export-html="handleExportHtml"
-  />
+            :show="showRightPanel"
+            :width="rightPanelWidth"
+            :is-mobile="isMobile"
+            :side-panel-mode="sidePanelMode"
+            :outline="outline"
+            :current-file="activeFileId ? { id: activeFileId } : null"
+            @set-mode="(mode) => (sidePanelMode = mode)"
+            @jump-to-heading="jumpToHeading"
+            @start-resize="startResize"
+            @export-markdown="handleExportMarkdown"
+            @export-pdf="handleExportPdf"
+            @export-html="handleExportHtml"
+          />
 
-  <!-- 移动端遮罩层 -->
-  <div
-    v-if="isMobile && (showSidebar || showRightPanel)"
-    class="mobile-overlay"
-    @click="
-      () => {
-        showSidebar = false
-        showRightPanel = false
-      }
-    "
-  ></div>
-
-  <!-- 移动端操作按钮 -->
-  <div class="mobile-actions">
-    <el-tooltip content="文件树" placement="left">
-      <el-button
-        circle
-        :icon="Folder"
-        size="large"
-        type="primary"
-        class="mobile-action-btn"
-        @click="
-          () => {
-            if (isMobile) {
-              showSidebar = true
-              showRightPanel = false
-            } else {
-              showSidebar = !showSidebar
-            }
-          }
-        "
-      />
-    </el-tooltip>
-    <el-tooltip content="侧边栏" placement="left">
-        <el-button
-          circle
-          :icon="Operation"
-          size="large"
-          type="primary"
-          class="mobile-action-btn"
-          @click="
-            () => {
-              if (isMobile) {
-                showRightPanel = true
+          <!-- 移动端遮罩层 -->
+          <div
+            v-if="isMobile && (showSidebar || showRightPanel)"
+            class="mobile-overlay"
+            @click="
+              () => {
                 showSidebar = false
-              } else {
-                showRightPanel = !showRightPanel
+                showRightPanel = false
               }
-            }
-          "
-        />
-      </el-tooltip>
-  </div>
+            "
+          ></div>
+
+          <!-- 移动端操作按钮 -->
+          <div class="mobile-actions">
+            <el-tooltip content="文件树" placement="left">
+              <el-button
+                circle
+                :icon="Folder"
+                size="large"
+                type="primary"
+                class="mobile-action-btn"
+                @click="
+                  () => {
+                    if (isMobile) {
+                      showSidebar = true
+                      showRightPanel = false
+                    } else {
+                      showSidebar = !showSidebar
+                    }
+                  }
+                "
+              />
+            </el-tooltip>
+            <el-tooltip content="侧边栏" placement="left">
+              <el-button
+                circle
+                :icon="Operation"
+                size="large"
+                type="primary"
+                class="mobile-action-btn"
+                @click="
+                  () => {
+                    if (isMobile) {
+                      showRightPanel = true
+                      showSidebar = false
+                    } else {
+                      showRightPanel = !showRightPanel
+                    }
+                  }
+                "
+              />
+            </el-tooltip>
+          </div>
         </div>
       </div>
     </div>
@@ -201,7 +201,16 @@
 import { ref, onMounted, nextTick, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { accessShare, getShareContent, getShareNodeContent } from '../api/shareService'
-import { Moon, Sunny, Document, Close, Monitor, Folder, Operation, Download } from '@element-plus/icons-vue'
+import {
+  Moon,
+  Sunny,
+  Document,
+  Close,
+  Monitor,
+  Folder,
+  Operation,
+  Download
+} from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import ShareFileTree from '../components/share/ShareFileTree.vue'
 import SidePanel from '../components/workspace/SidePanel.vue'
