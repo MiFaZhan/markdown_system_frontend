@@ -1,5 +1,5 @@
 <template>
-  <div class="share-container" :data-share-theme="isDark ? 'dark' : 'light'">
+  <div class="share-container" :class="{ 'is-mobile': isMobile }" :data-share-theme="isDark ? 'dark' : 'light'">
     <div v-if="needPassword" class="password-container">
       <div class="password-box" v-loading="loading">
         <h2>{{ shareInfo.targetName || '访问受限' }}</h2>
@@ -148,7 +148,7 @@
 
           <!-- 移动端操作按钮 -->
           <div class="mobile-actions">
-            <el-tooltip content="文件树" placement="left">
+            <div class="mobile-action-item">
               <el-button
                 circle
                 :icon="Folder"
@@ -166,8 +166,9 @@
                   }
                 "
               />
-            </el-tooltip>
-            <el-tooltip content="侧边栏" placement="left">
+              <span class="mobile-action-label">文件树</span>
+            </div>
+            <div class="mobile-action-item">
               <el-button
                 circle
                 :icon="Operation"
@@ -185,7 +186,8 @@
                   }
                 "
               />
-            </el-tooltip>
+              <span class="mobile-action-label">侧边栏</span>
+            </div>
           </div>
         </div>
       </div>
@@ -984,12 +986,16 @@ const handleExportPdf = async () => {
   position: absolute;
   bottom: 48px;
   right: 24px;
-  display: flex;
+  display: none;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 12px;
   z-index: 80;
+}
+
+.is-mobile .mobile-actions {
+  display: flex;
 }
 
 .mobile-action-btn {
@@ -1018,5 +1024,17 @@ const handleExportPdf = async () => {
   width: 20px;
   height: 20px;
   vertical-align: middle;
+}
+
+.mobile-action-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mobile-action-label {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  white-space: nowrap;
 }
 </style>
