@@ -173,17 +173,38 @@ const handleDelete = async (row) => {
   }
 }
 
+const fallbackCopy = (text) => {
+  const textarea = document.createElement('textarea')
+  textarea.value = text
+  textarea.style.position = 'fixed'
+  textarea.style.opacity = '0'
+  document.body.appendChild(textarea)
+  textarea.select()
+  try {
+    document.execCommand('copy')
+    ElMessage.success('链接已复制到剪贴板')
+  } catch (err) {
+    ElMessage.error('复制失败，请手动复制')
+  }
+  document.body.removeChild(textarea)
+}
+
 const copyShareLink = (row) => {
   const baseUrl = window.location.origin
   const shareUrl = `${baseUrl}/share/${row.shareCode}`
-  navigator.clipboard
-    .writeText(shareUrl)
-    .then(() => {
-      ElMessage.success('链接已复制到剪贴板')
-    })
-    .catch(() => {
-      ElMessage.error('复制失败')
-    })
+  
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard
+      .writeText(shareUrl)
+      .then(() => {
+        ElMessage.success('链接已复制到剪贴板')
+      })
+      .catch(() => {
+        fallbackCopy(shareUrl)
+      })
+  } else {
+    fallbackCopy(shareUrl)
+  }
 }
 
 const formatTime = (timeStr) => {

@@ -65,7 +65,18 @@
     />
 
     <div class="mobile-actions">
-      <el-tooltip content="文件树" placement="left">
+      <div class="mobile-action-item">
+        <el-button
+          circle
+          :icon="Plus"
+          size="large"
+          type="primary"
+          class="mobile-action-btn"
+          @click="handleCreateFile('file', currentProjectId)"
+        />
+        <span class="mobile-action-label">新建文件</span>
+      </div>
+      <div class="mobile-action-item">
         <el-button
           circle
           :icon="Folder"
@@ -74,8 +85,9 @@
           class="mobile-action-btn"
           @click="toggleSidebar"
         />
-      </el-tooltip>
-      <el-tooltip content="大纲/属性" placement="left">
+        <span class="mobile-action-label">文件树</span>
+      </div>
+      <div class="mobile-action-item">
         <el-button
           circle
           :icon="Operation"
@@ -84,7 +96,8 @@
           class="mobile-action-btn"
           @click="toggleOutline"
         />
-      </el-tooltip>
+        <span class="mobile-action-label">大纲/属性</span>
+      </div>
     </div>
   </div>
 </template>
@@ -92,7 +105,7 @@
 <script setup>
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Folder, Operation } from '@element-plus/icons-vue'
+import { Folder, Operation, Plus } from '@element-plus/icons-vue'
 
 import FileTreePanel from '../components/workspace/FileTreePanel.vue'
 import EditorPanel from '../components/workspace/EditorPanel.vue'
@@ -576,12 +589,16 @@ onMounted(() => {
   position: absolute;
   bottom: 48px;
   right: 24px;
-  display: flex;
+  display: none;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 12px;
   z-index: 80;
+}
+
+.is-mobile .mobile-actions {
+  display: flex;
 }
 
 .mobile-action-btn {
@@ -612,11 +629,38 @@ onMounted(() => {
   vertical-align: middle;
 }
 
+.mobile-action-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mobile-action-label {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 @media (max-width: 700px) {
   .workspace-layout.is-mobile .sidebar.mobile-sidebar,
   .workspace-layout.is-mobile .outline-panel.mobile-outline {
     width: 85% !important;
     max-width: 300px;
+  }
+
+  .mobile-actions {
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 8px;
+  }
+
+  .mobile-action-item {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .mobile-action-label {
+    font-size: 10px;
   }
 }
 </style>
